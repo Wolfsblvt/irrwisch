@@ -132,20 +132,22 @@ an asset pipeline; procedural drawing keeps the style changeable in code).
 
 **Reopen if.** The world routinely draws thousands of lit objects, or a selected visual effect genuinely needs the GPU.
 
-## Bootstrap publication on the Workers subdomain; the canonical domain is Wolf's choice
+## Publication is handed to Wolf Ops; no deployment from the building session
 
 **Date:** 2026-11-06 · **Status:** Current
 
-The first public cut is deployed by hand to `lichtung.wolfsblvt.workers.dev` as bootstrap evidence. The canonical
-public Home under a Wolf-owned name, the Cloudflare API token for the publication workflow, and the GitHub remote are
-owner effects and remain open remainders recorded in the README until Wolf selects them.
+The repository ships deployable and verified locally, with `website/wrangler.jsonc` and the publication workflow
+ready, but the first live cut, the canonical hostname, the Cloudflare credentials and the GitHub remote are carried by
+Wolf Ops through the handover in `docs/DEPLOYMENT.md`. The building session performs no provider effect.
 
-**Why.** Tala's grant covered building and publishing the project; choosing a registrable name, minting a provider
-credential and creating the remote are retained owner boundaries under the shared doctrine. Deploying to the Workers
-subdomain is finite, reversible by deleting the Worker, and lets Wolf see the real place before choosing its name.
+**Why.** Wolf decided it when Tala asked for a Cloudflare token: build the website without live deployment and let
+Wolf Ops handle deployment and hosting with a handover. That keeps provider credentials, DNS and the public Home
+admission with the estate that already operates the other product Workers, and keeps this repository's source free
+of any provider state it cannot prove.
 
-**Rejected.** Waiting to deploy until a domain exists (Wolf asked for a working thing, not a plan). Inventing a
-`wolfsblvt.works` subdomain (a Works estate decision Wolf Ops performs, not a product default).
+**Rejected.** A bootstrap deployment to `lichtung.wolfsblvt.workers.dev` from the building session (would have
+needed a token minted for one session and created a provider surface before the Home was chosen). Deploying through
+the Cloudflare MCP connection (it cannot carry the static-asset upload session).
 
-**Reopen if.** Wolf names the Home. Then `site.config.mjs` takes the canonical URL, Wolf Ops attaches the custom
-domain, and the Workers subdomain route is disabled.
+**Reopen if.** Wolf asks the product seat to deploy directly. Then `npm run deploy` is the route and the workflow
+becomes the steady-state controller.

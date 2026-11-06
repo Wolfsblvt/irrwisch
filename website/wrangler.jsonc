@@ -4,8 +4,8 @@
   "main": "worker/index.ts",
   "compatibility_date": "2026-11-01",
   "upload_source_maps": true,
-  // Bootstrap route only. Once Wolf selects the canonical Home, attach the
-  // custom domain through Wolf Ops and set this to false.
+  // Wolf Ops decides at publication whether the Workers subdomain stays on as
+  // a preview; the canonical Home is a custom domain attached by Wolf Ops.
   "workers_dev": true,
   "preview_urls": false,
   "assets": {

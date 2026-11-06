@@ -40,8 +40,8 @@ main:
   required pre-integration evidence: none
   required approval/review: none
   resolved conversations: no
-  automatic CI: .github/workflows/product-website.yml — provisional, not yet activated (no Cloudflare token or
-    production projection configured); owner: Wolf; see docs/DEPLOYMENT.md
+  automatic CI: .github/workflows/product-website.yml — provisional, not yet activated; Wolf Ops carries
+    activation through the handover in docs/DEPLOYMENT.md
   automatic retained branch effects: Worker deployment from accepted main once the workflow is activated
   other pre-update evidence: none
 ```

@@ -1,8 +1,8 @@
 export default {
   title: 'Lichtung',
   description: 'A small clearing in the woods that exists only because people came by. Every visitor leaves a light; some build, chalk or move something. Nothing is ever torn down.',
-  // Bootstrap Home on the Workers subdomain. Replace with the canonical
-  // Wolf-owned hostname once it is selected (see docs/DECISIONS.md).
+  // Placeholder that satisfies the publish check. Wolf Ops replaces it with the
+  // canonical Wolf-owned hostname before the first publication (docs/DEPLOYMENT.md).
   url: 'https://lichtung.wolfsblvt.workers.dev',
   docs: {
     mode: 'none',
