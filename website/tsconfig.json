@@ -1,0 +1,19 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true
+  },
+  "include": [
+    ".astro/types.d.ts",
+    "src/**/*",
+    "scripts/**/*",
+    "site.config.mjs",
+    "astro.config.mjs"
+  ],
+  "exclude": [
+    "artifacts",
+    "worker",
+    "tests"
+  ]
+}

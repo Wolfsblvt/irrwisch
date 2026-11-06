@@ -1,0 +1,34 @@
+---
+import site from '../../site.config.mjs';
+import { assetPath } from '../../scripts/identity-model.mjs';
+const hrefFor = (href: string) => href.startsWith('/') && !href.startsWith('//') ? assetPath(site, href) : href;
+const projectLinks: Array<{ label: string; href: string }> = [];
+if (site.links.source) projectLinks.push({ label: 'Source on GitHub', href: site.links.source });
+if (site.links.releases) projectLinks.push({ label: 'Releases', href: site.links.releases });
+if (site.links.status) projectLinks.push({ label: 'Status', href: site.links.status });
+if (site.links.security) projectLinks.push({ label: 'Security', href: site.links.security });
+if (site.links.licences) projectLinks.push({ label: 'Licences', href: site.links.licences });
+if (site.terms) projectLinks.push({ label: 'Terms', href: '/terms/' });
+projectLinks.push({ label: 'Privacy and data', href: '/privacy/' });
+projectLinks.push({ label: 'Impressum', href: '/impressum/' });
+---
+<footer class="site-footer">
+  <div class="site-footer-grid">
+    <section aria-labelledby="footer-product">
+      <h2 id="footer-product" class="site-footer-title">{site.title}</h2>
+      <p>{site.description}</p>
+      <p class="site-footer-maker">A {site.publisher} product</p>
+      {site.openSource && <p>Open source</p>}
+    </section>
+    {site.footerGroups.map((group) => (
+      <nav aria-label={group.title}>
+        <h2 class="site-footer-title">{group.title}</h2>
+        <ul>{group.links.map((link) => <li><a href={hrefFor(link.href)}>{link.label}</a></li>)}</ul>
+      </nav>
+    ))}
+    <nav aria-label="Project">
+      <h2 class="site-footer-title">Project</h2>
+      <ul>{projectLinks.map((link) => <li><a href={hrefFor(link.href)}>{link.label}</a></li>)}</ul>
+    </nav>
+  </div>
+</footer>

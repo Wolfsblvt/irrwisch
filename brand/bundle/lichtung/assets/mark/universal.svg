@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Lichtung mark: a small stacked house in a night clearing, one window lit. Universal appearance: it carries its own night. -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="#0b0f1a"/>
+  <circle cx="46" cy="17" r="5" fill="#e8e4d2"/>
+  <circle cx="48.5" cy="15.5" r="4.6" fill="#0b0f1a"/>
+  <ellipse cx="32" cy="50" rx="24" ry="5" fill="#1d2a2a"/>
+  <ellipse cx="32" cy="50" rx="12" ry="2.6" fill="#4a4134"/>
+  <path d="M19 44 V31 L32 22 L45 31 V44 Z" fill="#6b5233"/>
+  <path d="M32 22 L45 31 V44 H32 Z" fill="#80633f"/>
+  <path d="M16 32 L32 19 L48 32 L44 32 L32 23.5 L20 32 Z" fill="#7a3d2a"/>
+  <rect x="35" y="33" width="6" height="7" rx="1" fill="#ff8a3d"/>
+  <rect x="35" y="33" width="6" height="7" rx="1" fill="url(#g)"/>
+  <rect x="24" y="36" width="4" height="8" rx="1.5" fill="#2e2118"/>
+  <defs>
+    <radialGradient id="g" cx="0.5" cy="0.5" r="0.6">
+      <stop offset="0" stop-color="#ffd1ad" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ff8a3d" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+</svg>

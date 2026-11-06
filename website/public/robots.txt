@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://lichtung.wolfsblvt.workers.dev/sitemap-index.xml

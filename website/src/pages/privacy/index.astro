@@ -1,0 +1,37 @@
+---
+import Site from '../../layouts/Site.astro';
+import site from '../../../site.config.mjs';
+import { legalContacts, loadLegalOperator } from '../../lib/legal-operator.mjs';
+const operator = loadLegalOperator();
+const address = operator.postalAddress;
+const contacts = legalContacts(operator, site.legal.contact);
+---
+<Site>
+  <h1>Privacy and data</h1>
+  <p>Last updated: {site.legal.lastUpdated}</p>
+  <p>This page explains how {site.title} processes personal data.</p>
+  <h2>Controller</h2>
+  <address>
+    {operator.legalName}<br />
+    {address.streetAddress}<br />
+    {address.postalCode} {address.locality}<br />
+    {address.countryName}
+  </address>
+  <p>Privacy contact: <a href={`mailto:${contacts.privacy}`}>{contacts.privacy}</a></p>
+  <h2>Hosting and delivery</h2>
+  <dl>
+    <dt>Data processed and hosting</dt><dd>{site.legal.privacy.hosting}</dd>
+    <dt>Purposes and legal bases</dt><dd>{site.legal.privacy.purposeAndBasis}</dd>
+    <dt>Recipients and transfers</dt><dd>{site.legal.privacy.recipientsAndTransfers}</dd>
+    <dt>Retention</dt><dd>{site.legal.privacy.retention}</dd>
+    <dt>Required information and consequences</dt><dd>{site.legal.privacy.provision}</dd>
+  </dl>
+  <h2>Browser storage and client-side services</h2>
+  <dl><dt>Operations, device basis and data basis</dt><dd>{site.legal.privacy.storage}</dd></dl>
+  <h2>Contacting us</h2>
+  <dl><dt>Data, purpose, recipients, retention and optionality</dt><dd>{site.legal.privacy.contact}</dd></dl>
+  <h2>Your rights</h2>
+  <p>Subject to the applicable conditions, you may request access, correction, deletion, restriction of processing and data portability. Where processing relies on consent, you may withdraw it at any time without affecting the lawfulness of processing before withdrawal. Contact the privacy address above. You may complain to a supervisory authority, in particular where you habitually live, work or consider an infringement to have occurred.</p>
+  <h2>Your right to object</h2>
+  <p>Where processing relies on legitimate interests or a public-interest task, you may object at any time on grounds relating to your particular situation, including to associated profiling. We must then stop that processing unless we demonstrate overriding compelling legitimate grounds or need it for legal claims. If data is processed for direct marketing, you may object at any time and it will no longer be processed for that purpose.</p>
+</Site>

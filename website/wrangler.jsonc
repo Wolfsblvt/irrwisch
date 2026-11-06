@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "lichtung",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-01",
+  "upload_source_maps": true,
+  // Bootstrap route only. Once Wolf selects the canonical Home, attach the
+  // custom domain through Wolf Ops and set this to false.
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./artifacts/site",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "CLEARING", "class_name": "Clearing" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Clearing"] }],
+  "ratelimits": [
+    {
+      "name": "RATE_IP",
+      // Account-unique namespace; the Works contact form uses 1101–1103.
+      "namespace_id": "1201",
+      "simple": { "limit": 12, "period": 60 }
+    }
+  ],
+  "observability": { "enabled": false }
+}

@@ -1,0 +1,149 @@
+/* Reading pages (Impressum, Privacy, 404): the night palette at prose measure. */
+:root {
+  --brand-bg: #0b0f1a;
+  --brand-fg: #f3eee4;
+  --brand-muted: #b9bfcc;
+  --brand-accent: #ffb067;
+  --brand-panel: #161c2c;
+  --brand-border: #2a3144;
+  --brand-radius: 0.8rem;
+  --brand-font: ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --page-gutter: clamp(1rem, 2.5vw, 2rem);
+  --measure-prose: 68ch;
+  --frame-focused: 48rem;
+  --frame-content: 80rem;
+  --frame-wide: 96rem;
+  color-scheme: dark;
+}
+.site-shell {
+  margin: 0;
+  background: var(--brand-bg);
+  color: var(--brand-fg);
+  font-family: var(--brand-font);
+  line-height: 1.65;
+}
+.site-shell * {
+  box-sizing: border-box;
+}
+.site-shell a {
+  color: var(--brand-accent);
+  text-underline-offset: 0.2em;
+}
+.site-header,
+.site-footer {
+  --frame-max: var(--frame-content);
+  inline-size: 100%;
+  max-inline-size: calc(var(--frame-max) + var(--page-gutter) + var(--page-gutter));
+  margin-inline: auto;
+  padding-inline: var(--page-gutter);
+}
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-block: 1.25rem;
+}
+.site-name img {
+  display: block;
+  height: 22px;
+  width: auto;
+}
+.site-header nav {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  font-size: 0.95rem;
+}
+.site-content {
+  inline-size: 100%;
+  padding-inline: var(--page-gutter);
+  padding-block: clamp(2rem, 6vw, 4rem);
+  min-height: 65vh;
+  overflow-wrap: anywhere;
+}
+.site-content > * {
+  max-inline-size: var(--measure-prose);
+  margin-inline: auto;
+}
+.site-content h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.1;
+}
+.site-content h2 {
+  line-height: 1.25;
+  margin-top: 2rem;
+}
+.site-content dl {
+  display: grid;
+  gap: 0.25rem 1rem;
+}
+.site-content dt {
+  color: var(--brand-muted);
+  font-size: 0.9rem;
+  margin-top: 0.75rem;
+}
+.site-content dd {
+  margin: 0;
+}
+.site-content address {
+  font-style: normal;
+}
+.site-footer {
+  padding-block: 2.5rem;
+  color: var(--brand-muted);
+  font-size: 0.9rem;
+  border-top: 1px solid var(--brand-border);
+}
+.site-footer-grid {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1.45fr) repeat(3, minmax(9rem, 1fr));
+  gap: clamp(1.5rem, 4vw, 4rem);
+}
+.site-footer-title {
+  margin: 0 0 0.8rem;
+  color: var(--brand-fg);
+  font-size: 1rem;
+}
+.site-footer p {
+  margin: 0.4rem 0;
+  max-width: 34ch;
+}
+.site-footer-maker {
+  color: var(--brand-fg);
+  font-weight: 600;
+}
+.site-footer ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+@media (max-width: 52rem) {
+  .site-footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 32rem) {
+  .site-footer-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.site-shell :focus-visible {
+  outline: 3px solid var(--brand-accent);
+  outline-offset: 4px;
+}
+.site-skip {
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  transform: translateY(-150%);
+  background: var(--brand-bg);
+  padding: 0.5rem;
+  z-index: 10;
+}
+.site-skip:focus {
+  transform: translateY(0);
+}

@@ -1,0 +1,53 @@
+---
+/**
+ * Shared document head: identity metadata resolved from site.config.mjs and
+ * the public-pages inventory, so every route projects the same facts.
+ */
+import site from '../../site.config.mjs';
+import publicPages from '../data/public-pages.mjs';
+import { assetPath, resolvePageIdentity, routeFromPath } from '../../scripts/identity-model.mjs';
+import { normalizePublicRoute } from '../../scripts/social-preview-model.mjs';
+
+interface Props {
+  pathname: string;
+}
+
+const path = routeFromPath(site, Astro.props.pathname);
+const source = publicPages.find((page) => normalizePublicRoute(page.path) === path);
+if (!source) throw new Error(`Custom page needs one public-pages identity entry: ${path}`);
+const page = resolvePageIdentity(site, path, source);
+const robots = page.indexing === 'noindex'
+  ? page.role === 'legal' ? 'noindex, nosnippet' : 'noindex'
+  : null;
+const structuredData = page.structuredData
+  ? JSON.stringify(page.structuredData).replaceAll('<', '\\u003c')
+  : null;
+export { page };
+---
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, viewport-fit=cover" />
+<title>{page.title}</title>
+<meta name="description" content={page.description} />
+{robots && <meta name="robots" content={robots} />}
+{page.canonical && <link rel="canonical" href={page.canonical} />}
+{page.sharing === 'share' && <>
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content={page.pageTitle} />
+  <meta property="og:description" content={page.description} />
+  <meta property="og:site_name" content={site.identity.hostSiteName} />
+  <meta property="og:locale" content={page.locale} />
+  {page.canonical && <meta property="og:url" content={page.canonical} />}
+  {page.imageUrl && <meta property="og:image" content={page.imageUrl} />}
+  {page.imageUrl && <meta property="og:image:alt" content={page.socialAlt} />}
+  <meta name="twitter:card" content={page.imageUrl ? 'summary_large_image' : 'summary'} />
+  <meta name="twitter:title" content={page.pageTitle} />
+  <meta name="twitter:description" content={page.description} />
+  {page.imageUrl && <meta name="twitter:image" content={page.imageUrl} />}
+  {page.imageUrl && <meta name="twitter:image:alt" content={page.socialAlt} />}
+</>}
+{structuredData && <script type="application/ld+json" set:html={structuredData} />}
+<meta name="theme-color" content={site.identity.themeColor} />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" href={assetPath(site, site.identity.icons.svg)} type="image/svg+xml" />
+<link rel="icon" href={assetPath(site, site.identity.icons.raster)} sizes="192x192" type="image/png" />
+<link rel="apple-touch-icon" href={assetPath(site, site.identity.icons.touch)} sizes="180x180" />

@@ -1,0 +1,25 @@
+---
+import Site from '../../layouts/Site.astro';
+import site from '../../../site.config.mjs';
+import { legalContacts, loadLegalOperator, resolveAdditionalDirectContact } from '../../lib/legal-operator.mjs';
+const operator = loadLegalOperator();
+const address = operator.postalAddress;
+const contacts = legalContacts(operator, site.legal.contact);
+const directContact = resolveAdditionalDirectContact(operator, site.legal.impressum.directContact);
+---
+<Site>
+  <h1>Impressum</h1>
+  <p>Information pursuant to § 5 DDG</p>
+  <h2>Provider</h2>
+  <address>
+    {operator.legalName}<br />
+    {address.streetAddress}<br />
+    {address.postalCode} {address.locality}<br />
+    {address.countryName}
+  </address>
+  <p>{operator.publisherName} is the maker and publisher identity used for this product.</p>
+  <h2>Contact</h2>
+  <p>Email: <a href={`mailto:${contacts.impressum}`}>{contacts.impressum}</a></p>
+  <p><a href={directContact.href}>{directContact.label}</a></p>
+  {site.legal.consumerDispute && <section><h2>Consumer dispute resolution</h2><p>{site.legal.consumerDispute}</p></section>}
+</Site>

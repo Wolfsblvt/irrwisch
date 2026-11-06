@@ -1,0 +1,10 @@
+---
+import Site from '../layouts/Site.astro';
+import site from '../../site.config.mjs';
+import { assetPath } from '../../scripts/identity-model.mjs';
+---
+<Site>
+  <h1>Not here</h1>
+  <p>This address does not point into the clearing. The woods go on for a while in every direction.</p>
+  <p><a href={assetPath(site, '/')}>Walk back in</a></p>
+</Site>

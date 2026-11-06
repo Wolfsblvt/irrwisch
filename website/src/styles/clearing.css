@@ -1,0 +1,423 @@
+/* The clearing page: a full-bleed canvas with a quiet overlay. */
+:root {
+  --night: #0b0f1a;
+  --ink: #f3eee4;
+  --ink-muted: #b9bfcc;
+  --ember: #ff8a3d;
+  --ember-soft: rgba(255, 138, 61, 0.18);
+  --panel: rgba(14, 18, 30, 0.72);
+  --panel-edge: rgba(243, 238, 228, 0.12);
+  --font: ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: dark;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--night);
+  color: var(--ink);
+  font-family: var(--font);
+  overflow: hidden;
+}
+
+.clearing-body {
+  position: relative;
+}
+
+.clearing {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+
+.overlay[data-mode='build'] ~ .clearing,
+.overlay[data-mode='place'] ~ .clearing,
+.overlay[data-mode='chalk'] ~ .clearing,
+.overlay[data-mode='nudge'] ~ .clearing {
+  cursor: crosshair;
+}
+
+.skip {
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  transform: translateY(-150%);
+  background: var(--night);
+  color: var(--ink);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  z-index: 20;
+}
+.skip:focus {
+  transform: translateY(0.5rem);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: minmax(0, 1fr);
+  padding: max(0.9rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(0.9rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  z-index: 5;
+}
+.overlay button,
+.overlay a,
+.overlay .chalk {
+  pointer-events: auto;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.brand {
+  opacity: 0.92;
+}
+.brand img {
+  display: block;
+  height: 30px;
+  width: auto;
+}
+
+.count {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+  letter-spacing: 0.01em;
+  text-align: right;
+  max-width: 22ch;
+}
+
+.stage {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  min-height: 0;
+}
+
+.whisper {
+  grid-row: 2;
+  margin: 0 0 0.9rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  font-size: 0.95rem;
+  color: var(--ink);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 240ms ease, transform 240ms ease;
+  max-width: min(32rem, calc(100vw - 3rem));
+  text-align: center;
+}
+.whisper.is-on {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.bottom {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+}
+
+.verbs {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.35rem;
+  border-radius: 1.1rem;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.verb {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  padding: 0.45rem 0.7rem 0.4rem;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  min-width: 3.6rem;
+  transition: background 160ms ease, color 160ms ease, transform 120ms ease;
+}
+.verb svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.verb em {
+  font-style: normal;
+  font-size: 0.7rem;
+  line-height: 0.6rem;
+  min-height: 0.6rem;
+  letter-spacing: 0.08em;
+  color: var(--ember);
+}
+.verb:hover {
+  background: rgba(243, 238, 228, 0.07);
+}
+.verb:active {
+  transform: translateY(1px);
+}
+.verb[aria-pressed='true'] {
+  background: var(--ember-soft);
+  color: #ffd1ad;
+}
+.verb:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.verb:focus-visible,
+.helper:focus-visible,
+.card:focus-visible,
+.chalk-cell:focus-visible,
+.chalk-colour:focus-visible,
+.small a:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.helpers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  max-width: calc(100vw - 2rem);
+}
+.helpers:empty {
+  display: none;
+}
+.helper {
+  appearance: none;
+  border: 1px solid var(--panel-edge);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.helper:hover {
+  border-color: rgba(255, 138, 61, 0.5);
+}
+.helper:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.helper--quiet {
+  color: var(--ink-muted);
+}
+
+.hand {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.hand[hidden] {
+  display: none;
+}
+.card {
+  appearance: none;
+  border: 1px solid var(--panel-edge);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.7rem;
+  cursor: pointer;
+}
+.card[aria-pressed='true'] {
+  border-color: var(--ember);
+  background: var(--ember-soft);
+  color: #ffd1ad;
+}
+
+.chalk {
+  grid-row: 1;
+  align-self: center;
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.9rem;
+  border-radius: 1rem;
+  background: rgba(14, 18, 30, 0.9);
+  border: 1px solid var(--panel-edge);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  width: min(20rem, calc(100vw - 2rem));
+}
+.chalk[hidden] {
+  display: none;
+}
+.chalk-title {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+.chalk-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--size, 8), 1fr);
+  gap: 3px;
+  background: #2a2e38;
+  padding: 4px;
+  border-radius: 0.4rem;
+  aspect-ratio: 1;
+}
+.chalk-cell {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: #1f2330;
+  border-radius: 2px;
+  cursor: pointer;
+  min-width: 0;
+}
+.chalk-cell[data-value='1'] {
+  background: #f3eee4;
+}
+.chalk-cell[data-value='2'] {
+  background: var(--ember);
+}
+.chalk-cell:disabled {
+  cursor: default;
+}
+.chalk-cell:not(:disabled):hover {
+  outline: 1px solid rgba(243, 238, 228, 0.5);
+}
+.chalk-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.chalk-colour {
+  appearance: none;
+  border: 1px solid var(--panel-edge);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.chalk-colour::before {
+  content: '';
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: #f3eee4;
+}
+.chalk-colour--ember::before {
+  background: var(--ember);
+}
+.chalk-colour[aria-pressed='true'] {
+  border-color: var(--ember);
+}
+.chalk-count {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+.small {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: 0.9rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+.small a {
+  color: var(--ink-muted);
+  text-decoration: none;
+  opacity: 0.85;
+}
+.small a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.is-offline .verbs {
+  opacity: 0.6;
+}
+
+.noscript {
+  position: fixed;
+  inset: auto 1rem 1rem;
+  padding: 1rem;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 0.8rem;
+  z-index: 30;
+  max-width: 36rem;
+  margin-inline: auto;
+}
+.noscript p {
+  margin: 0;
+}
+
+@media (max-width: 40rem) {
+  .verbs {
+    gap: 0.1rem;
+    padding: 0.25rem;
+  }
+  .verb {
+    min-width: 3rem;
+    padding: 0.4rem 0.5rem 0.35rem;
+    font-size: 0.72rem;
+  }
+  .count {
+    font-size: 0.74rem;
+    max-width: 14ch;
+  }
+  .small {
+    position: fixed;
+    right: max(0.75rem, env(safe-area-inset-right));
+    top: 3.4rem;
+    bottom: auto;
+    flex-direction: column;
+    gap: 0.3rem;
+    align-items: flex-end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .whisper {
+    transition: none;
+  }
+  .verb {
+    transition: none;
+  }
+}
