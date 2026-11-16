@@ -1,12 +1,12 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "lichtung",
+  "name": "irrwisch",
   "main": "worker/index.ts",
   "compatibility_date": "2026-11-01",
   "upload_source_maps": true,
-  // Wolf Ops decides at publication whether the Workers subdomain stays on as
-  // a preview; the canonical Home is a custom domain attached by Wolf Ops.
-  "workers_dev": true,
+  // The canonical Home is a custom domain attached by Wolf Ops; routes and domains stay out of this file so
+  // routine uploads keep those connections. The Workers subdomain stays off so no second public copy exists.
+  "workers_dev": false,
   "preview_urls": false,
   "assets": {
     "directory": "./artifacts/site",

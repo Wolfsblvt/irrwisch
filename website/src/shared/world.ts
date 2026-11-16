@@ -10,9 +10,13 @@ import { hashInts, unit } from './rng.ts';
 export const WORLD_VERSION = 1;
 
 /** Ground grid edge length. Cells are addressed 0..GRID-1 on both axes. */
-export const GRID = 40;
+export const GRID = 96;
 /** The settlement starts around the middle of the grid. */
-export const CENTER = { x: 20, y: 20 } as const;
+export const CENTER = { x: 48, y: 48 } as const;
+/** The woods step back at most this many times; each step widens the clearing by one cell. */
+export const MAX_GROWTH = 30;
+/** Share of clearing ground that may be taken before the woods step back. */
+export const GROWTH_AT = 0.3;
 /** Rooms may stack this high (z is 0-based). */
 export const MAX_HEIGHT = 4;
 /** Chalk slates are square bitmaps of this edge length. */
@@ -97,6 +101,8 @@ export interface Snapshot {
   createdAt: number;
   now: number;
   visits: number;
+  /** How many steps the woods have receded. */
+  growth: number;
   rooms: Room[];
   things: Thing[];
   creatures: Creature[];
@@ -115,12 +121,15 @@ export class World {
   readonly things = new Map<number, Thing>();
   readonly creatures = new Map<number, Creature>();
   readonly wear = new Map<string, number>();
+  /** How many steps the woods have receded; widens the clearing. */
+  growth = 0;
   /** Rooms stacked per ground cell, ordered by z. */
   private readonly stacks = new Map<string, Room[]>();
   private readonly thingsByCell = new Map<string, Thing>();
 
   constructor(snapshot?: Snapshot) {
     if (!snapshot) return;
+    this.growth = snapshot.growth ?? 0;
     for (const room of snapshot.rooms) this.addRoom(room);
     for (const thing of snapshot.things) this.addThing(thing);
     for (const creature of snapshot.creatures) this.creatures.set(creature.id, creature);
@@ -142,6 +151,14 @@ export class World {
 
   stackAt(x: number, y: number): Room[] {
     return this.stacks.get(key(x, y)) ?? [];
+  }
+
+  removeThing(id: number): Thing | undefined {
+    const thing = this.things.get(id);
+    if (!thing) return undefined;
+    this.things.delete(id);
+    this.thingsByCell.delete(key(thing.x, thing.y));
+    return thing;
   }
 
   thingAt(x: number, y: number): Thing | undefined {
@@ -189,25 +206,48 @@ export function inGrid(x: number, y: number): boolean {
  * forest. Both sides derive it from the same deterministic noise so they
  * agree without transferring a mask.
  */
-export function isClearing(x: number, y: number): boolean {
+export function isClearing(x: number, y: number, growth = 0): boolean {
   if (!inGrid(x, y)) return false;
   const dx = x - CENTER.x;
   const dy = y - CENTER.y;
   const distance = Math.hypot(dx, dy);
   const angle = Math.atan2(dy, dx);
-  const radius = clearingRadius(angle);
+  const radius = clearingRadius(angle) + Math.min(MAX_GROWTH, Math.max(0, growth));
   return distance <= radius;
 }
 
-/** Radius of the clearing in a given direction, roughly 11 to 15 cells. */
+/** Every ground cell of the clearing at a given growth. */
+export function clearingCells(growth = 0): Point[] {
+  const cells: Point[] = [];
+  const reach = 13 + Math.min(MAX_GROWTH, Math.max(0, growth));
+  for (let x = CENTER.x - reach; x <= CENTER.x + reach; x += 1) {
+    for (let y = CENTER.y - reach; y <= CENTER.y + reach; y += 1) {
+      if (isClearing(x, y, growth)) cells.push({ x, y });
+    }
+  }
+  return cells;
+}
+
+/** Share of clearing ground that holds a room stack or a thing. */
+export function groundOccupancy(world: World): number {
+  const total = clearingCells(world.growth).length;
+  return total === 0 ? 1 : (world.groundRoomCells().length + world.things.size) / total;
+}
+
+/** The woods step back once the ground gets crowded, until they cannot any more. */
+export function shouldGrow(world: World): boolean {
+  return world.growth < MAX_GROWTH && groundOccupancy(world) > GROWTH_AT;
+}
+
+/** Base radius of the clearing in a given direction, roughly 9 to 12 cells before any growth. */
 export function clearingRadius(angle: number): number {
   const turn = ((angle + Math.PI) / (Math.PI * 2)) * 12;
   const a = Math.floor(turn);
   const b = (a + 1) % 12;
   const t = turn - a;
   const smooth = t * t * (3 - 2 * t);
-  const ra = 11 + unit(hashInts(a, 7, 31)) * 4;
-  const rb = 11 + unit(hashInts(b, 7, 31)) * 4;
+  const ra = 9 + unit(hashInts(a, 7, 31)) * 3;
+  const rb = 9 + unit(hashInts(b, 7, 31)) * 3;
   return ra + (rb - ra) * smooth;
 }
 
@@ -219,12 +259,12 @@ export function isReserved(x: number, y: number): boolean {
 }
 
 /** Where visitors walk in from: the clearing cell nearest the viewer's edge. */
-export function entryPoint(): Point {
+export function entryPoint(growth = 0): Point {
   let best: Point = { x: CENTER.x, y: CENTER.y };
   let bestScore = -Infinity;
   for (let x = 0; x < GRID; x += 1) {
     for (let y = 0; y < GRID; y += 1) {
-      if (!isClearing(x, y)) continue;
+      if (!isClearing(x, y, growth)) continue;
       // Screen-down is +x+y in the isometric projection; prefer a slightly
       // left-of-centre entry so the path crosses the clearing diagonally.
       const score = x + y - Math.abs(x - y - 4) * 0.3;
@@ -257,7 +297,7 @@ export type BuildVerdict =
 
 /** A room may stack on an existing stack or sit on the ground beside one. */
 export function canBuild(world: World, x: number, y: number): BuildVerdict {
-  if (!isClearing(x, y)) return { ok: false, reason: 'outside' };
+  if (!isClearing(x, y, world.growth)) return { ok: false, reason: 'outside' };
   if (isReserved(x, y)) return { ok: false, reason: 'reserved' };
   const stack = world.stackAt(x, y);
   if (stack.length > 0) {
@@ -277,7 +317,7 @@ export type PlaceVerdict =
 /** A thing sits on free ground within reach of the settlement. */
 export function canPlace(world: World, kind: string, x: number, y: number): PlaceVerdict {
   if (!THING_KINDS.includes(kind as ThingKind)) return { ok: false, reason: 'kind' };
-  if (!isClearing(x, y)) return { ok: false, reason: 'outside' };
+  if (!isClearing(x, y, world.growth)) return { ok: false, reason: 'outside' };
   if (isReserved(x, y)) return { ok: false, reason: 'reserved' };
   if (world.stackAt(x, y).length > 0 || world.thingAt(x, y) || world.creatureAt(x, y)) {
     return { ok: false, reason: 'occupied' };
@@ -318,7 +358,7 @@ export function canChalk(world: World, roomId: number, strokes: unknown, budget:
 
 /** Cells a creature may step onto: clearing ground with nothing standing on it. */
 export function isWalkable(world: World, x: number, y: number): boolean {
-  return isClearing(x, y)
+  return isClearing(x, y, world.growth)
     && !isReserved(x, y)
     && world.stackAt(x, y).length === 0
     && !world.creatureAt(x, y);
@@ -351,7 +391,7 @@ export function findPath(world: World, from: Point, to: Point): Point[] {
     for (const next of neighbours(current.x, current.y)) {
       const nextKey = key(next.x, next.y);
       if (previous.has(nextKey)) continue;
-      const passable = nextKey === goal || (isClearing(next.x, next.y) && world.stackAt(next.x, next.y).length === 0);
+      const passable = nextKey === goal || (isClearing(next.x, next.y, world.growth) && world.stackAt(next.x, next.y).length === 0);
       if (!passable) continue;
       previous.set(nextKey, currentKey);
       queue.push(next);
@@ -378,7 +418,7 @@ export function doorstep(world: World, room: Room): Point | null {
     { x: room.x - 1, y: room.y },
   ];
   for (const cell of candidates) {
-    if (isClearing(cell.x, cell.y) && world.stackAt(cell.x, cell.y).length === 0) return cell;
+    if (isClearing(cell.x, cell.y, world.growth) && world.stackAt(cell.x, cell.y).length === 0) return cell;
   }
   return null;
 }
@@ -461,22 +501,27 @@ export function placeSpots(world: World, kind: ThingKind): Point[] {
 
 /** The seed the clearing starts from before anyone has visited. */
 export function seedSnapshot(now: number): Snapshot {
+  const cx = CENTER.x;
+  const cy = CENTER.y;
+  const room = (id: number, x: number, y: number, z: number, hue: RoomHue, lit: boolean): Room => ({
+    id, x, y, z, hue, roof: roofFor(x, y, z), litAt: lit ? now : 0, lights: lit ? 1 : 0, sign: blankSign(),
+  });
   const rooms: Room[] = [
-    { id: 1, x: 20, y: 18, z: 0, hue: 'ochre', roof: roofFor(20, 18, 0), litAt: now, lights: 1, sign: blankSign() },
-    { id: 2, x: 21, y: 18, z: 0, hue: 'moss', roof: roofFor(21, 18, 0), litAt: 0, lights: 0, sign: blankSign() },
-    { id: 3, x: 20, y: 18, z: 1, hue: 'dusk', roof: roofFor(20, 18, 1), litAt: 0, lights: 0, sign: blankSign() },
-    { id: 4, x: 18, y: 20, z: 0, hue: 'plum', roof: roofFor(18, 20, 0), litAt: 0, lights: 0, sign: blankSign() },
+    room(1, cx, cy - 2, 0, 'ochre', true),
+    room(2, cx + 1, cy - 2, 0, 'moss', false),
+    room(3, cx, cy - 2, 1, 'dusk', false),
+    room(4, cx - 2, cy, 0, 'plum', false),
   ];
   const things: Thing[] = [
-    { id: 1, kind: 'lantern', x: 21, y: 21, placedAt: now },
-    { id: 2, kind: 'stone', x: 17, y: 19, placedAt: now },
-    { id: 3, kind: 'sapling', x: 23, y: 20, placedAt: now - 2 * 24 * 60 * 60 * 1000 },
+    { id: 1, kind: 'lantern', x: cx + 1, y: cy + 1, placedAt: now },
+    { id: 2, kind: 'stone', x: cx - 3, y: cy - 1, placedAt: now },
+    { id: 3, kind: 'sapling', x: cx + 3, y: cy, placedAt: now - 2 * 24 * 60 * 60 * 1000 },
   ];
   const creatures: Creature[] = [
-    { id: 1, x: 22, y: 23, facing: 2, movedAt: now },
-    { id: 2, x: 16, y: 21, facing: 0, movedAt: now },
+    { id: 1, x: cx + 2, y: cy + 3, facing: 2, movedAt: now },
+    { id: 2, x: cx - 4, y: cy + 1, facing: 0, movedAt: now },
   ];
-  return { version: WORLD_VERSION, createdAt: now, now, visits: 0, rooms, things, creatures, tiles: [] };
+  return { version: WORLD_VERSION, createdAt: now, now, visits: 0, growth: 0, rooms, things, creatures, tiles: [] };
 }
 
 export function blankSign(): number[] {

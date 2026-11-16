@@ -111,6 +111,11 @@ async function boot(): Promise<void> {
       case 'wave':
         if (!event.mine) ui.whisper('someone waved at you.');
         return;
+      case 'grow':
+        scene.relayout();
+        scene.fitToSettlement();
+        ui.whisper('the woods stepped back a little.', 8000);
+        return;
       case 'omen':
         if (event.omen?.kind === 'eyes') ui.whisper('one of the windows is looking back.', 9000);
         if (event.omen?.kind === 'hum') ui.whisper('something is humming in the cave.', 9000);
@@ -139,6 +144,7 @@ async function boot(): Promise<void> {
           ui.setBudgets(message.budgets);
           ui.setHand(message.hand);
           ui.setCount(view.visits, view.presence);
+          scene.relayout();
           scene.fitToSettlement();
           return;
         case 'delta':
@@ -157,6 +163,13 @@ async function boot(): Promise<void> {
           return;
       }
     },
+  });
+
+  const about = document.querySelector<HTMLDialogElement>('[data-about]');
+  document.querySelector<HTMLButtonElement>('[data-about-open]')?.addEventListener('click', () => about?.showModal());
+  about?.addEventListener('click', (event) => {
+    // A click on the backdrop (the dialog element itself) closes it.
+    if (event.target === about) about.close();
   });
 
   wirePointer(canvas, scene, ui, view, () => pickedThing, send);

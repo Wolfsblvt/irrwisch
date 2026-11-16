@@ -2,7 +2,7 @@
 
 ## Meaning
 
-Curated durable choices for Lichtung and why they were made: the shape of the shared clearing, the rules that keep
+Curated durable choices for Irrwisch and why they were made: the shape of the shared clearing, the rules that keep
 visitors from destroying it, the hosting and state model, and the things deliberately left out. Each entry records
 what is true now, the constraint that drove it, the alternative that lost, and what would reopen it. Routine
 implementation detail stays in code and `docs/ARCHITECTURE.md`; product dream stays in `docs/VISION.md`.
@@ -40,9 +40,9 @@ drawings the less interesting option and would need a word filter that still fai
 
 **Reopen if.** A real community forms around the place and asks for a way to sign work, and someone owns moderation.
 
-## Nothing is ever deleted; change is rate-limited and additive
+## Nothing is ever deleted by visitors; change is rate-limited and additive
 
-**Date:** 2026-11-06 · **Status:** Current
+**Date:** 2026-11-06 · **Status:** Current, narrowed on 2026-11-16 by "The operator can remove unlawful content"
 
 The rules allow only additions: rooms are placed, never removed; chalk cells are set, never cleared; things are placed,
 never picked up; creatures are nudged one step, never removed. Per connection a visitor gets one room, one thing, a
@@ -132,22 +132,93 @@ an asset pipeline; procedural drawing keeps the style changeable in code).
 
 **Reopen if.** The world routinely draws thousands of lit objects, or a selected visual effect genuinely needs the GPU.
 
-## Publication is handed to Wolf Ops; no deployment from the building session
+## The name is Irrwisch
 
-**Date:** 2026-11-06 · **Status:** Current
+**Date:** 2026-11-16 · **Status:** Current
 
-The repository ships deployable and verified locally, with `website/wrangler.jsonc` and the publication workflow
-ready, but the first live cut, the canonical hostname, the Cloudflare credentials and the GitHub remote are carried by
-Wolf Ops through the handover in `docs/DEPLOYMENT.md`. The building session performs no provider effect.
+The product is called Irrwisch. The recommended canonical Home is `irrwisch.com`, which Cloudflare Registrar reported
+as free on 2026-11-16 at 11.17 USD a year; buying it is Wolf's spend and has not happened.
 
-**Why.** Wolf decided it when Tala asked for a Cloudflare token: build the website without live deployment and let
-Wolf Ops handle deployment and hosting with a handover. That keeps provider credentials, DNS and the public Home
-admission with the estate that already operates the other product Workers, and keeps this repository's source free
-of any provider state it cannot prove.
+**Why.** The first name, Lichtung, already names the interface of Baumhaus, as Wolf pointed out. Two Works things
+with one name would collide on the Works site, in rooms and in search. An Irrwisch (will-o'-the-wisp; colloquially a
+restless little creature) carries the tone Wolf asked for: cute, a bit scary, a bit weird. It also names the visitor
+rather than the place, which fits a page where arriving is the point.
 
-**Rejected.** A bootstrap deployment to `lichtung.wolfsblvt.workers.dev` from the building session (would have
-needed a token minted for one session and created a provider surface before the Home was chosen). Deploying through
-the Cloudflare MCP connection (it cannot carry the static-asset upload session).
+**Rejected.** Keeping Lichtung (the collision is inside one maker's estate and Baumhaus had the name first).
+Weilchen, "a little while" (lovely, and `weilchen.com` was free, but the Works pile already carries Folkwhile, a
+village game, and two settlement projects with "while" in the name would blur). Glimmen (a Dutch village; `.com`
+taken). Hamlit, Emberwell (`.com` taken, and Hamlit reads as a typo).
 
-**Reopen if.** Wolf asks the product seat to deploy directly. Then `npm run deploy` is the route and the workflow
-becomes the steady-state controller.
+**Reopen if.** Wolf prefers another name. The rename is mechanical: `site.config.mjs`, the wordmark export, the
+Worker name and the documents.
+
+## The operator can remove unlawful content
+
+**Date:** 2026-11-16 · **Status:** Current
+
+The Worker has three operator routes behind a bearer secret (`ADMIN_TOKEN`): list every non-blank slate and thing as
+text, wipe one slate, remove one thing. Without the secret set, the routes do not exist. The Terms and the about
+panel tell visitors how to report something, and say the operator will remove unlawful or hateful content.
+
+**Why.** An 8 by 8 slate with two colours is a drawing surface, and strangers on the internet draw what strangers on
+the internet draw, including symbols that are illegal to display in Germany. The first Vision promised that nobody,
+"including the operator", could delete anything. That promise was wrong for a public page with a German operator
+and unkind to visitors who would have to look at whatever stayed. Removal by rule stays impossible for visitors.
+
+**Rejected.** No removal at all (see above). Automatic shape detection on slates (brittle, and a false sense of
+safety). A public report button that hides content by vote (a griefing tool). A moderation dashboard (three routes
+and `curl` are enough until real use says otherwise).
+
+**Reopen if.** Reports become frequent enough that listing and wiping by hand is toil, or a legal assessment says
+the page needs a formal notice-and-action form.
+
+## The clearing grows with the settlement
+
+**Date:** 2026-11-16 · **Status:** Current
+
+The grid is 96 by 96 and the clearing starts 9 to 12 cells in radius. Whenever rooms on the ground and things
+together cover more than 30 percent of the clearing floor, the woods step back one cell, at most thirty times. The
+camera frames the whole clearing while it fits the screen and the settlement once it does not.
+
+**Why.** With a fixed 40 by 40 clearing, one thing and one room per visitor filled the ground after a few hundred
+visits, which a public site reaches in days. A simulated run of visitors showed the first step after 56 to 72 of
+them. Thirty steps give room for a few thousand things and far more rooms, and "together you clear the woods" is a
+better story than a full sign.
+
+**Rejected.** A large fixed clearing (an empty field with the woods far away loses the cosy ring). Letting things be
+built over or decay (breaks "never destroy"). An unbounded world (needs chunked storage and rendering the product
+has not earned).
+
+**Reopen if.** The place approaches the thirtieth step. The options are in the Vision's open possibilities.
+
+## Terms are part of the legal surface
+
+**Date:** 2026-11-16 · **Status:** Current
+
+The site carries `/terms/` beside `/impressum/` and `/privacy/`, linked from the front page, the about panel and the
+footer of the reading pages.
+
+**Why.** The Works legal baseline gives every externally usable hosted service Terms, and a page where visitors add
+lasting content to a shared world is one. The Terms say what the first cut left unsaid: contributions are anonymous,
+permanent and cannot be withdrawn, the operator may display them, and unlawful content is removed.
+
+**Rejected.** Treating the page as a plain static site with Impressum and Privacy only (it stores visitor
+contributions on a server).
+
+**Reopen if.** Qualified legal review asks for different wording, or the page gains accounts, payments or text input.
+
+## Wolf publishes with Wolf Ops, on Cloudflare only
+
+**Date:** 2026-11-16 · **Status:** Current, supersedes the 2026-11-06 handover decision in detail
+
+The whole product runs on Cloudflare: one Worker with static assets, one SQLite Durable Object, one rate-limit
+binding, a Cloudflare zone for the domain. Nothing touches Wolf Server or any other host. The building session
+performs no provider effect; Wolf deploys with Wolf Ops from the packet in `docs/DEPLOYMENT.md`.
+
+**Why.** Wolf declined a Cloudflare token for the building session on 2026-11-06 and asked for a handover; on
+2026-11-16 he said he would deploy that night and wanted hosting on Cloudflare only. The workload fits Workers
+exactly, the account already runs the other product Workers this way, and a toy page does not earn a server.
+
+**Rejected.** A bootstrap deployment from the building session. Any origin outside Cloudflare.
+
+**Reopen if.** The world outgrows one Durable Object, or the Workers plan limits start refusing visitors.

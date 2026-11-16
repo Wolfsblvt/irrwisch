@@ -74,16 +74,33 @@ import '../styles/clearing.css';
       </section>
 
       <footer class="small">
-        <a href={assetPath(site, '/impressum/')}>Impressum</a>
+        <button type="button" class="small-link" data-about-open aria-haspopup="dialog">what is this?</button>
+        <a href={assetPath(site, '/terms/')}>Terms</a>
         <a href={assetPath(site, '/privacy/')}>Privacy and data</a>
-        <a href="https://wolfsblvt.works/" rel="noopener">Wolfsblvt Works</a>
+        <a href={assetPath(site, '/impressum/')}>Impressum</a>
+        <a href="https://wolfsblvt.works/" rel="noopener">A Wolfsblvt Works product</a>
       </footer>
       </div>
     </div>
 
+    <dialog class="about" data-about aria-labelledby="about-title">
+      <h1 id="about-title">Irrwisch</h1>
+      <p>A small clearing in the woods that exists only because people came by. An Irrwisch is a will-o'-the-wisp: a little light wandering the woods at night. Tonight that is you.</p>
+      <p>When you arrived, a figure with a lantern walked in and a window lit up. It stays lit for a while, then settles to an ember that never goes out. Before you leave you can build one room, place one thing, chalk a few cells on a slate, shoo one of the little ones a step, and wave to whoever else is here.</p>
+      <p>Nothing you add can be taken back, and nobody can tear down what others built. The place is whatever everyone made of it. It changes a little while nobody is watching.</p>
+      <p class="about-quiet">No account, no cookies, nothing stored on your device. Everything left here is anonymous and public. Seen something on a slate that should not be there? <a href="https://contact.wolfsblvt.works/" rel="noopener">Tell me</a> and I will wipe it.</p>
+      <p class="about-links">
+        <a href={assetPath(site, '/terms/')}>Terms</a>
+        <a href={assetPath(site, '/privacy/')}>Privacy and data</a>
+        <a href={assetPath(site, '/impressum/')}>Impressum</a>
+        <a href="https://wolfsblvt.works/" rel="noopener">A Wolfsblvt Works product</a>
+      </p>
+      <form method="dialog"><button type="submit" class="helper">back to the clearing</button></form>
+    </dialog>
+
     <noscript>
       <div class="noscript">
-        <p>Lichtung is a small clearing in the woods that only exists because people came by. It is drawn live in your browser, which needs JavaScript. The ground is still there without it; you just cannot see it tonight.</p>
+        <p>Irrwisch is a small clearing in the woods that only exists because people came by. It is drawn live in your browser, which needs JavaScript. The ground is still there without it; you just cannot see it tonight.</p>
       </div>
     </noscript>
 

@@ -388,6 +388,20 @@ body {
   margin: 0;
 }
 
+@media (max-width: 72rem) {
+  /* The row would run into the verbs; tuck the small links under the count instead. */
+  .small {
+    position: fixed;
+    right: max(0.75rem, env(safe-area-inset-right));
+    top: 3.4rem;
+    bottom: auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.25rem 0.8rem;
+    max-width: 15rem;
+  }
+}
+
 @media (max-width: 40rem) {
   .verbs {
     gap: 0.1rem;
@@ -402,15 +416,6 @@ body {
     font-size: 0.74rem;
     max-width: 14ch;
   }
-  .small {
-    position: fixed;
-    right: max(0.75rem, env(safe-area-inset-right));
-    top: 3.4rem;
-    bottom: auto;
-    flex-direction: column;
-    gap: 0.3rem;
-    align-items: flex-end;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -420,4 +425,63 @@ body {
   .verb {
     transition: none;
   }
+}
+
+.small-link {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--ink-muted);
+  opacity: 0.85;
+  cursor: pointer;
+}
+.small-link:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.small-link:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.about {
+  width: min(34rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  padding: 1.4rem 1.5rem 1.2rem;
+  border: 1px solid var(--panel-edge);
+  border-radius: 1rem;
+  background: rgba(14, 18, 30, 0.96);
+  color: var(--ink);
+  font-family: var(--font);
+  line-height: 1.55;
+}
+.about::backdrop {
+  background: rgba(4, 6, 12, 0.6);
+}
+.about h1 {
+  margin: 0 0 0.6rem;
+  font-size: 1.3rem;
+}
+.about p {
+  margin: 0 0 0.8rem;
+  font-size: 0.95rem;
+}
+.about a {
+  color: #ffb067;
+  text-underline-offset: 0.2em;
+}
+.about-quiet {
+  color: var(--ink-muted);
+  font-size: 0.85rem !important;
+}
+.about-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1rem;
+  font-size: 0.8rem !important;
 }

@@ -43,6 +43,7 @@ export type ViewEvent =
   | { kind: 'hop'; mine: boolean }
   | { kind: 'wave'; mine: boolean }
   | { kind: 'omen'; omen: Omen | null }
+  | { kind: 'grow' }
   | { kind: 'ground' };
 
 export const WALK_PACE_MS = 320;
@@ -178,6 +179,18 @@ export class View {
         this.emit({ kind: 'wave', mine });
         return;
       }
+      case 'grow':
+        this.world.growth = op.growth;
+        this.emit({ kind: 'grow' });
+        return;
+      case 'wipe': {
+        const room = this.world.rooms.get(op.room);
+        if (room) room.sign.fill(0);
+        return;
+      }
+      case 'gone':
+        this.world.removeThing(op.thing);
+        return;
       case 'omen':
         this.omen = op.omen;
         this.emit({ kind: 'omen', omen: op.omen });

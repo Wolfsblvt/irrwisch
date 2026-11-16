@@ -1,8 +1,8 @@
-# Lichtung repository instructions
+# Irrwisch repository instructions
 
 ## Meaning
 
-This is the repository-local operating boundary for Lichtung, the shared night clearing. It names the one component,
+This is the repository-local operating boundary for Irrwisch, the shared night clearing. It names the one component,
 the commands that prove it, the durable branch posture, and the facts a coworker must not infer from the tree. It
 supplements the shared Leitsatz doctrine and grants no Work or authority.
 
@@ -15,7 +15,10 @@ supplements the shared Leitsatz doctrine and grants no Work or authority.
 - The visitor's device stores nothing (see `docs/DECISIONS.md`). Do not add cookies, storage or analytics.
 - `website/src/data/legal-operator.example.json` is an obvious fixture. The real operator record is projected only
   into production builds through `WOLFSBLVT_LEGAL_OPERATOR_B64`; never commit or print it.
-- Leitsatz adopted through `deploy-leitsatz-skill-mcp-v0.8.87` (source `c82a6426`) at creation on 2026-11-06.
+- The only deletions are the operator routes behind `ADMIN_TOKEN` (wipe a slate, remove a thing). Never add a
+  visitor-facing way to remove or overwrite, and never put the secret in source, logs or `wrangler.jsonc`.
+- Publication is Cloudflare only and carried by Wolf Ops; keep routes and domains out of `wrangler.jsonc`.
+- Leitsatz adopted through `deploy-leitsatz-skill-mcp-v0.8.92` (source `2962234f`), last checked 2026-11-16.
 
 ## Commands
 

@@ -1,5 +1,5 @@
 /**
- * Export the Lichtung identity set from brand/source into brand/bundle and
+ * Export the Irrwisch identity set from brand/source into brand/bundle and
  * copy the two projections the website serves. Deterministic; safe to rerun.
  */
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -9,8 +9,8 @@ import sharp from 'sharp';
 
 const website = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repo = resolve(website, '..');
-const source = resolve(repo, 'brand/source/lichtung');
-const bundle = resolve(repo, 'brand/bundle/lichtung/assets');
+const source = resolve(repo, 'brand/source/irrwisch');
+const bundle = resolve(repo, 'brand/bundle/irrwisch/assets');
 
 const exports = [
   { role: 'mark', appearance: 'universal', file: 'mark.svg', width: 512 },

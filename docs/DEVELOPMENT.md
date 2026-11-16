@@ -2,7 +2,7 @@
 
 ## Meaning
 
-Everything in Lichtung can be run on one machine: the static page, the Worker and the Durable Object with a local
+Everything in Irrwisch can be run on one machine: the static page, the Worker and the Durable Object with a local
 SQLite file. This guide owns the bootstrap, run, test and reset path for `website/`; it exists so nobody re-derives
 the Wrangler-plus-Astro dance from the two configuration files.
 
@@ -39,6 +39,9 @@ page code, rebuild and restart it; Wrangler does not pick up a replaced asset di
 The only service is the Durable Object inside `wrangler dev`. Its SQLite file lives under `website/.wrangler/state/`.
 The first request seeds the clearing with a well, four rooms, three things and two creatures.
 
+The operator routes under `/api/admin/` exist only when `ADMIN_TOKEN` is set. For local work copy
+`.dev.vars.example` to `.dev.vars` (ignored by Git) and put any string of 24 or more characters in it.
+
 ## Safe reset
 
 ```bash
@@ -53,6 +56,7 @@ This forgets the local world and every build output. It touches nothing deployed
 - `artifacts/site/` is the Astro build and the Worker's asset directory. Regenerate with `npm run build`.
 - `public/favicon.png`, `public/apple-touch-icon.png`, `public/_headers`, `public/robots.txt` and
   `public/social/generated/` are written by `npm run assets:generate`, which `build` runs first. They are ignored.
+- `public/social/home.png` is a committed capture of a local clearing, used as the social preview.
 - `public/favicon.svg` and `public/wordmark.svg` are committed copies of `brand/`; regenerate with
   `node scripts/export-brand.mjs` after changing a master.
 

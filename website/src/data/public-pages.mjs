@@ -3,13 +3,13 @@ export default [
     path: '/',
     title: null,
     description: 'A small clearing in the woods that exists only because people came by. Every visitor leaves a light; some build, chalk or move something. Nothing is ever torn down.',
-    surfaceName: 'Lichtung',
+    surfaceName: 'Irrwisch',
     indexing: 'index',
     role: 'public',
     social: {
-      generate: true,
+      image: '/social/home.png',
       eyebrow: 'A place made by whoever came by',
-      alt: 'Lichtung: a night clearing with a small settlement of lit windows',
+      alt: 'Irrwisch: a night clearing with a small settlement of lit windows',
     },
   },
   {
@@ -22,6 +22,12 @@ export default [
     path: '/privacy/',
     title: 'Privacy and data',
     description: 'How this site processes personal data.',
+    role: 'legal',
+  },
+  {
+    path: '/terms/',
+    title: 'Terms',
+    description: 'Terms for visiting and adding to the clearing.',
     role: 'legal',
   },
   {

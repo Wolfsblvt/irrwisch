@@ -2,7 +2,7 @@
 
 ## Meaning
 
-Lichtung is one page that draws a shared night clearing and one Worker that keeps it. The repository is shaped so the
+Irrwisch is one page that draws a shared night clearing and one Worker that keeps it. The repository is shaped so the
 page, the world rules and the keeper are separate things that agree on one model. This map owns the layout and the
 entry points; it exists because the split between client, shared rules and Worker is invisible from a file list.
 
@@ -14,7 +14,7 @@ entry points; it exists because the split between client, shared rules and Worke
 | `website/src/shared/` | World model, rules, protocol and seeded helpers | Runs on both the Worker and the client so they never disagree about a valid spot |
 | `website/src/client/` | Canvas renderer, sprites, camera, UI overlay, WebSocket client | Browser-only code; nothing here is trusted by the Worker |
 | `website/worker/` | Worker entry and the `Clearing` Durable Object | The only code that mutates the world |
-| `website/src/pages/` | `index.astro` (the clearing), `impressum/`, `privacy/`, `404.astro` | Astro routes; the three small pages share `layouts/Site.astro` |
+| `website/src/pages/` | `index.astro` (the clearing), `impressum/`, `privacy/`, `terms/`, `404.astro` | Astro routes; the four reading pages share `layouts/Site.astro` |
 | `website/scripts/` | Identity model, site assets, publish checks, brand export | Build-time tooling adopted from the shared website starter |
 | `website/tests/` | Rule tests run with `node --test` | Pure logic, no framework |
 | `brand/` | Identity masters and exported asset set | Owned by the identity, consumed by the site and the README |

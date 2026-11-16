@@ -1,0 +1,48 @@
+---
+import Site from '../../layouts/Site.astro';
+import site from '../../../site.config.mjs';
+import { assetPath } from '../../../scripts/identity-model.mjs';
+import { legalContacts, loadLegalOperator, resolveAdditionalDirectContact } from '../../lib/legal-operator.mjs';
+const operator = loadLegalOperator();
+const address = operator.postalAddress;
+const contacts = legalContacts(operator, site.legal.contact);
+const directContact = resolveAdditionalDirectContact(operator, site.legal.impressum.directContact);
+const terms = site.legal.terms;
+---
+<Site>
+  <h1>Terms</h1>
+  <p>Effective date: {site.legal.lastUpdated}</p>
+  <h2>Provider and contact</h2>
+  <address>
+    {operator.legalName}<br />
+    {address.streetAddress}<br />
+    {address.postalCode} {address.locality}<br />
+    {address.countryName}
+  </address>
+  <p>Email: <a href={`mailto:${contacts.legal}`}>{contacts.legal}</a></p>
+  <h2>Service</h2>
+  <p>{terms.service}</p>
+  <h2>Contract formation and eligibility</h2>
+  <p>{terms.formation}</p>
+  <p>{terms.eligibility}</p>
+  <h2>What you leave here</h2>
+  <p>{terms.contributions}</p>
+  <h2>Acceptable use</h2>
+  <p>Use the service lawfully and without harming the service, other visitors, third parties, connected systems or their data. Do not bypass access controls, rate limits or security boundaries, do not automate visits or contributions, and do not create disproportionate load. Do not use the slates, rooms or things to draw or arrange unlawful, hateful or harassing content.</p>
+  <h2>Reporting and removal</h2>
+  <p>{terms.removal} Report it by email to <a href={`mailto:${contacts.legal}`}>{contacts.legal}</a> or through the <a href={directContact.href}>{directContact.label.toLowerCase()}</a>, and say which room or slate you mean.</p>
+  <h2>Availability and limits</h2>
+  <p>{terms.availability}</p>
+  <h2>Suspension and termination</h2>
+  <p>{terms.suspension}</p>
+  <h2>Changes</h2>
+  <p>{terms.changes}</p>
+  <h2>Liability</h2>
+  <p>Statutory liability rules apply.</p>
+  {terms.liability && <p>{terms.liability}</p>}
+  <h2>Privacy and licences</h2>
+  <p>The <a href={assetPath(site, '/privacy/')}>Privacy and data</a> page explains personal-data processing. Software, documentation and other materials remain governed by their stated licences; these Terms do not retract rights those licences grant.</p>
+  <h2>Contact and applicable law</h2>
+  <p>Contact the legal address above. Mandatory consumer protections and jurisdiction rules remain unaffected where they apply.</p>
+  {site.legal.consumerDispute && <section><h2>Consumer dispute resolution</h2><p>{site.legal.consumerDispute}</p></section>}
+</Site>

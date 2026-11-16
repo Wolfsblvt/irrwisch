@@ -1,7 +1,7 @@
-<h1 id="lichtung">
+<h1 id="irrwisch">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="brand/bundle/lichtung/assets/wordmark/on-dark.svg">
-    <img src="brand/bundle/lichtung/assets/wordmark/on-light.svg" alt="Lichtung" height="48">
+    <source media="(prefers-color-scheme: dark)" srcset="brand/bundle/irrwisch/assets/wordmark/on-dark.svg">
+    <img src="brand/bundle/irrwisch/assets/wordmark/on-light.svg" alt="Irrwisch" height="48">
   </picture>
 </h1>
 
@@ -24,10 +24,11 @@ ten seconds; staying a minute or two is the idea.
 
 **[Run it locally](#run-it-yourself)** · [How it is built](docs/ARCHITECTURE.md) · [Where it is going](docs/VISION.md)
 
-The clearing is not published yet. Wolf Ops carries the first live cut and its hostname through the handover in
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+The clearing is not published yet. Wolf and Wolf Ops carry the first live cut, on Cloudflare only, through the
+packet in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). An Irrwisch is a will-o'-the-wisp: a small light wandering the
+woods at night. Every visitor is one.
 
-![The clearing at night: a ring of dark conifers around a mossy floor, a worn path leading in from the lower left, a small settlement of stacked rooms with lit windows in the middle, a lantern, a pumpkin, and two round one-eyed creatures](docs/assets/readme/clearing.png)
+![The clearing at night after about sixty simulated visits: a ring of dark conifers around a mossy floor, worn paths, a small village of stacked rooms with lit windows, lanterns, pumpkins, mushrooms and a scarecrow](docs/assets/readme/clearing.png)
 
 ## What you get
 
@@ -38,10 +39,13 @@ The clearing is not published yet. Wolf Ops carries the first live cut and its h
   a keyboard route, including "let the clearing choose".
 - **A world with its own clock.** Saplings grow over days, embers cool over a week, the little ones wander, and now
   and then something odd happens: a window with eyes, a hum from the cave, something tall crossing the moon.
-- **Additive by rule.** Rooms are never removed, chalk is never cleared, things are never picked up. "Never destroy,
-  never change too much" is enforced by the rules of the place, not by moderation.
+- **Additive by rule.** No visitor can remove a room, clear chalk or pick a thing up. "Never destroy, never change
+  too much" is enforced by the rules of the place. The operator alone can wipe a slate or remove a thing that is
+  unlawful or hateful.
+- **The woods step back.** When the ground around the houses gets crowded, the clearing widens by one cell for
+  everyone, so the place does not fill up and stop.
 
-![Close on the settlement: a three-storey tower with a chalk mark on its slate, a lantern post, a pumpkin with a carved face, mushrooms, a sapling, and a one-eyed creature on the path](docs/assets/readme/settlement.png)
+![Close on the village: stacked rooms in ochre, moss, dusk and plum with lit windows, lantern posts, carved pumpkins, bones, and a one-eyed creature on the path](docs/assets/readme/settlement.png)
 
 ## Run it yourself
 
@@ -57,8 +61,8 @@ is [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 The page sets no cookies and uses no browser storage. Everything a visitor leaves is anonymous, public and permanent
 by design; nothing links it back to a person. Cloudflare receives the ordinary request data to serve the page and
-holds a per-address rate-limit counter in memory for a minute. The live pages at `/privacy/` and `/impressum/` say
-exactly this. The clearing needs a browser with Canvas 2D and WebSockets; it honours the reduced-motion preference by
+holds a per-address rate-limit counter in memory for a minute. The pages at `/privacy/`, `/terms/` and `/impressum/`
+say exactly this, and the Terms say how to report something that should not be there. The clearing needs a browser with Canvas 2D and WebSockets; it honours the reduced-motion preference by
 removing drift and walking while keeping the place legible.
 
 ## Where it stands
@@ -75,4 +79,4 @@ Copyright © Wolfsblvt. All rights reserved.
 This private repository is not offered under a public or general licence. Its contents may be used, copied, modified,
 disclosed, or distributed only within permission explicitly granted by the copyright holder. Access to the repository
 or receipt of a copy grants no additional rights. The wordmark lettering derives from Caveat, used under the SIL Open
-Font License 1.1 (`brand/source/lichtung/caveat-OFL.txt`).
+Font License 1.1 (`brand/source/irrwisch/caveat-OFL.txt`).

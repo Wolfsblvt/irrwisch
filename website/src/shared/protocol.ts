@@ -24,6 +24,9 @@ export type Delta =
   | { k: 'chalk'; room: number; strokes: ChalkStroke[] }
   | { k: 'hop'; creature: number; to: Point; facing: number }
   | { k: 'wave'; at: Point }
+  | { k: 'grow'; growth: number }
+  | { k: 'wipe'; room: number }
+  | { k: 'gone'; thing: number }
   | { k: 'omen'; omen: Omen | null };
 
 /** A rare oddity everyone sees at the same time. */

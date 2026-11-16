@@ -14,7 +14,8 @@ import {
   canBuild,
   canPlace,
   growthStage,
-  isClearing,
+  CENTER,
+  clearingCells,
   windowGlow,
 } from '../shared/world.ts';
 import {
@@ -63,9 +64,9 @@ export type Hit =
   | { kind: 'room'; room: Room; face: 'left' | 'right' | 'top' }
   | { kind: 'cell'; cell: Point };
 
-const MIN_ZOOM = 0.7;
-/** The moon hangs in world space above the back of the clearing, so it never sits over the woods. */
-const MOON = { sx: 600, sy: 250, r: 40 };
+const MIN_ZOOM = 0.35;
+/** Below this the whole clearing is too small to read; frame the settlement instead. */
+const FIT_FLOOR = 0.62;
 const MAX_ZOOM = 2.6;
 
 interface SceneObject {
@@ -91,7 +92,9 @@ export class Scene {
   /** The cells beyond the clearing that hold trees, computed once. */
   private readonly trees: Point[] = [];
   private readonly floor: Array<Point & { fade: number }> = [];
-  private readonly cave: Point;
+  private cave: Point = { x: 0, y: 0 };
+  /** The moon hangs in world space beyond the right-hand treeline, so it never sits over the woods. */
+  private moon = { sx: 0, sy: 0, r: 40 };
   private stars: HTMLCanvasElement | null = null;
   private fog: HTMLCanvasElement | null = null;
   private grain: HTMLCanvasElement | null = null;
@@ -104,7 +107,7 @@ export class Scene {
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) throw new Error('Canvas 2D is not available.');
     this.ctx = ctx;
-    this.cave = this.layoutForest();
+    this.relayout();
     onReducedMotionChange((reduced) => {
       this.reduced = reduced;
     });
@@ -126,7 +129,7 @@ export class Scene {
         // Keep the clearing alive; one bad frame must not end the night.
         if (!reported) {
           reported = true;
-          console.error('[lichtung] frame failed', error);
+          console.error('[irrwisch] frame failed', error);
         }
       }
       this.frameHandle = requestAnimationFrame(frame);
@@ -169,7 +172,8 @@ export class Scene {
     }
     const spanX = (maxX - minX) * 1.18;
     const spanY = (maxY - minY) * 1.35;
-    const zoom = clamp(Math.min(this.width / spanX, this.height / spanY), MIN_ZOOM, MAX_ZOOM);
+    let zoom = Math.min(this.width / spanX, this.height / spanY);
+    const wholeClearing = zoom >= FIT_FLOOR;
     // Weight the centre toward where the rooms are, so a lopsided settlement stays in view.
     const rooms = [...this.view.world.rooms.values()];
     const focus = rooms.length > 0
@@ -178,8 +182,29 @@ export class Scene {
           return { sx: sum.sx + point.sx / rooms.length, sy: sum.sy + point.sy / rooms.length };
         }, { sx: 0, sy: 0 })
       : project(WELL.x, WELL.y);
-    this.cameraTarget.cx = ((minX + maxX) / 2) * 0.4 + focus.sx * 0.6;
-    this.cameraTarget.cy = ((minY + maxY) / 2) * 0.4 + focus.sy * 0.6 + (this.height / zoom) * 0.06;
+    if (wholeClearing) {
+      zoom = clamp(zoom, MIN_ZOOM, MAX_ZOOM);
+      this.cameraTarget.cx = ((minX + maxX) / 2) * 0.4 + focus.sx * 0.6;
+      this.cameraTarget.cy = ((minY + maxY) / 2) * 0.4 + focus.sy * 0.6 + (this.height / zoom) * 0.06;
+    } else {
+      // The clearing has outgrown the screen: frame the houses and let the visitor pan to the woods.
+      let left = Infinity;
+      let right = -Infinity;
+      let top = Infinity;
+      let bottom = -Infinity;
+      for (const room of rooms) {
+        const point = project(room.x, room.y, room.z);
+        left = Math.min(left, point.sx);
+        right = Math.max(right, point.sx);
+        top = Math.min(top, point.sy);
+        bottom = Math.max(bottom, point.sy);
+      }
+      const settleX = right - left + TILE_W * 10;
+      const settleY = bottom - top + TILE_H * 14;
+      zoom = clamp(Math.min(this.width / settleX, this.height / settleY), FIT_FLOOR, 1.2);
+      this.cameraTarget.cx = (left + right) / 2;
+      this.cameraTarget.cy = (top + bottom) / 2 + (this.height / zoom) * 0.04;
+    }
     this.cameraTarget.zoom = zoom;
     if (immediate || this.reduced) Object.assign(this.camera, this.cameraTarget);
   }
@@ -297,7 +322,7 @@ export class Scene {
     ctx.translate(this.width / 2, this.height / 2);
     ctx.scale(this.camera.zoom, this.camera.zoom);
     ctx.translate(-this.camera.cx, -this.camera.cy);
-    drawMoon(ctx, MOON.sx, MOON.sy, MOON.r, clock.seconds, this.moonShadow(clock));
+    drawMoon(ctx, this.moon.sx, this.moon.sy, this.moon.r, clock.seconds, this.moonShadow(clock));
     this.drawGround(ctx);
     const objects = this.collectObjects(clock, nowMs);
     objects.sort((a, b) => a.depth - b.depth);
@@ -496,12 +521,14 @@ export class Scene {
     const flicker = (seed: number): number => 0.92 + unit(hashInts(clock.step, seed, 3)) * 0.16;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
+    // Many lit windows side by side would add up to a white blur; share the light out as the place grows.
+    const crowd = Math.min(1, 3.4 / Math.sqrt(Math.max(1, this.view.world.rooms.size)));
     for (const room of this.view.world.rooms.values()) {
       const glow = windowGlow(room, serverNow);
       if (glow <= 0) continue;
       const w = windowCentre(room);
       if (w.sx < bounds.minX || w.sx > bounds.maxX || w.sy < bounds.minY || w.sy > bounds.maxY) continue;
-      drawGlow(ctx, w.sx + 1, w.sy, 34 + glow * 14, 0.22 * glow * (this.reduced ? 1 : flicker(room.id)));
+      drawGlow(ctx, w.sx + 1, w.sy, 34 + glow * 14, 0.22 * glow * crowd * (this.reduced ? 1 : flicker(room.id)));
     }
     for (const thing of this.view.world.things.values()) {
       const c = project(thing.x, thing.y);
@@ -577,20 +604,22 @@ export class Scene {
 
   // ----- Static layout ----------------------------------------------------------
 
-  private layoutForest(): Point {
-    let cave: Point = { x: 0, y: 0 };
+  /** Recompute the clearing, the forest ring, the cave and the moon; called at start and whenever the woods recede. */
+  relayout(): void {
+    const growth = this.view.world.growth;
+    this.clearingCells.length = 0;
+    this.floor.length = 0;
+    this.trees.length = 0;
+    let cave: Point = { x: CENTER.x, y: CENTER.y };
     let caveScore = Infinity;
     const clearing = new Set<string>();
-    for (let x = 0; x < GRID; x += 1) {
-      for (let y = 0; y < GRID; y += 1) {
-        if (isClearing(x, y)) {
-          clearing.add(`${x},${y}`);
-          this.clearingCells.push({ x, y });
-        }
-      }
+    for (const cell of clearingCells(growth)) {
+      clearing.add(`${cell.x},${cell.y}`);
+      this.clearingCells.push(cell);
     }
-    for (let x = -6; x < GRID + 6; x += 1) {
-      for (let y = -6; y < GRID + 6; y += 1) {
+    const reach = 13 + growth + 10;
+    for (let x = CENTER.x - reach; x <= CENTER.x + reach; x += 1) {
+      for (let y = CENTER.y - reach; y <= CENTER.y + reach; y += 1) {
         if (clearing.has(`${x},${y}`)) continue;
         let ring = Infinity;
         for (let dx = -9; dx <= 9 && ring > 1; dx += 1) {
@@ -612,14 +641,14 @@ export class Scene {
       }
     }
     // The cave mouth sits where the forest meets the clearing at the back; no tree grows in it.
-    const caveKey = `${cave.x},${cave.y}`;
     for (let index = this.trees.length - 1; index >= 0; index -= 1) {
       const tree = this.trees[index];
-      if (`${tree.x},${tree.y}` === caveKey || (Math.abs(tree.x - cave.x) <= 1 && Math.abs(tree.y - cave.y) <= 1)) {
-        this.trees.splice(index, 1);
-      }
+      if (Math.abs(tree.x - cave.x) <= 1 && Math.abs(tree.y - cave.y) <= 1) this.trees.splice(index, 1);
     }
-    return cave;
+    this.cave = cave;
+    const centre = project(CENTER.x, CENTER.y);
+    const radius = 10.5 + growth;
+    this.moon = { sx: centre.sx + (radius + 12) * (TILE_W / 2), sy: centre.sy - (radius + 6) * (TILE_H / 2), r: 40 };
   }
 }
 

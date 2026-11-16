@@ -1,8 +1,8 @@
-# Lichtung
+# Irrwisch
 
 ## Meaning
 
-Lichtung is a small night clearing in the woods that exists only because people came by. It is one page on the
+Irrwisch is a small night clearing in the woods that exists only because people came by. It is one page on the
 internet. Every visitor leaves a trace just by arriving: a window lights up, the ground wears a little where their
 figure walked in. Most visitors do one more small thing before they leave: build a room onto the settlement, put a
 lantern or a sapling on the ground, chalk a few pixels onto a sign, or shoo one of the little creatures a step along.
@@ -35,8 +35,11 @@ He named the boundary of the page as well: the project is the front, the Impress
 small to reach, there is a small way to the Wolfsblvt Works site, and nothing else is in the foreground. No subpages,
 no landing page leading to an app.
 
-Tala chose what is being built: a settlement in a clearing at night, lit one window at a time by whoever arrives. The
-name is the German word for a clearing in the woods, which also reads as "lighting" to an English eye. The miniature,
+Tala chose what is being built: a settlement in a clearing at night, lit one window at a time by whoever arrives. An
+Irrwisch is a will-o'-the-wisp, a small light wandering the woods at night, and in everyday German also a restless
+little creature that cannot sit still: cute, slightly eerie, a bit odd. Every visitor is one. The project was first
+called Lichtung (the German word for a clearing); on 2026-11-16 Wolf pointed out that Lichtung already names the
+interface of Baumhaus, and Tala renamed it. The miniature,
 slightly-wrong-on-purpose look comes from Tala's own taste for stop-motion and small strange dioramas, and the one warm
 colour in a quiet night palette is her orange. Why this mattered to Wolf beyond the brief is his to say; it is not
 recorded here.
@@ -70,9 +73,14 @@ The whole visit takes a minute or two and needs no account, no name, no reading.
 5. **Nudge a creature.** Up to three times, shoo one of the little ones a step away. They also wander on their own.
 6. **Wave.** Raise the lantern so anyone else in the clearing right now sees it. This leaves no mark.
 
-No text input exists anywhere. Nothing can be deleted, moved back, or repainted over except by the slow accumulation
-of other people's small additions. "Never destroy completely, never change too much" is enforced by the rules of the
-place, not by moderation.
+No text input exists anywhere. No visitor can delete, move back, or repaint anything; the place changes only by the
+slow accumulation of other people's small additions. "Never destroy completely, never change too much" is enforced by
+the rules of the place. The one exception is the operator, who can wipe a slate or take a thing off the ground when
+someone has drawn or arranged something unlawful or hateful. A public page run from Germany needs that, and a place
+people are invited into deserves it.
+
+When the ground around the houses gets crowded, the woods step back one cell and the clearing is a little larger for
+everyone. The settlement and the clearing grow together.
 
 ## How life with it should feel
 
@@ -97,9 +105,10 @@ These are part of the complete product even where the first cut implements less:
 - the live shared clearing with arrival, build, place, chalk, nudge and wave as described;
 - a world that evolves on its own clock: growth, wandering, cooling embers, and occasional rare events that everyone
   sees at the same moment;
+- a clearing that widens as the settlement grows, so the place does not fill up and stop;
 - a canonical public Home under a Wolf-owned domain, automatic publication from accepted `main`, and the shared
   Wolfsblvt Works legal surface;
-- the identity asset set for the Lichtung mark and wordmark;
+- the identity asset set for the Irrwisch mark and wordmark;
 - a visible past: the age of embers, the wear of paths, and the growth stage of trees should read as time without a
   timeline widget.
 
@@ -107,6 +116,8 @@ These are part of the complete product even where the first cut implements less:
 
 Not accepted, not rejected; worth keeping near:
 
+- what happens when the woods cannot step back any further (after thirty steps the clearing holds a few thousand
+  things): a second clearing down the path, or old things sinking into moss, or simply a finished place;
 - seasons or weather that change the palette over the real year;
 - an optional sound layer behind a visible switch;
 - rare "visitors from the woods" that arrive on their own and leave strange things;
@@ -118,8 +129,8 @@ Not accepted, not rejected; worth keeping near:
 ## What it refuses
 
 - Accounts, names, free text, chat, comments, uploads.
-- Deleting or overwriting anything another visitor left, by anyone, including the operator, except through the
-  operator's own recovery of the world after real damage.
+- Visitors deleting or overwriting anything another visitor left. The operator removes only unlawful or hateful
+  content and repairs the world after real damage; taste is not a reason.
 - Growth mechanics that reward returning often: no streaks, no currency, no unlocks tied to the visitor.
 - Tracking, analytics products, consent banners made necessary by optional storage, remote resources.
 - Becoming a platform: one clearing, one page. A second place would be a second project.

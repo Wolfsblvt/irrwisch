@@ -2,9 +2,13 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createRandom } from '../src/shared/rng.ts';
 import {
+  CENTER,
   CHALK_EMBER,
   CHALK_WHITE,
   FRESH_BUDGETS,
+  GRID,
+  GROWTH_AT,
+  MAX_GROWTH,
   MAX_HEIGHT,
   SIGN_CELLS,
   World,
@@ -12,6 +16,7 @@ import {
   canBuild,
   canChalk,
   canPlace,
+  clearingCells,
   dealHand,
   doorstep,
   entryPoint,
@@ -21,23 +26,50 @@ import {
   nudgeTarget,
   placeSpots,
   seedSnapshot,
+  shouldGrow,
   windowGlow,
 } from '../src/shared/world.ts';
 
 const NOW = Date.UTC(2026, 10, 6, 12, 0, 0);
+const CX = CENTER.x;
+const CY = CENTER.y;
 
 function seeded(): World {
   return new World(seedSnapshot(NOW));
 }
 
 test('the clearing is a connected blob around the centre inside the grid', () => {
-  assert.equal(isClearing(20, 20), true);
+  assert.equal(isClearing(CX, CY), true);
   assert.equal(isClearing(0, 0), false);
-  assert.equal(isClearing(-1, 20), false);
-  assert.equal(isClearing(39, 39), false);
-  let cells = 0;
-  for (let x = 0; x < 40; x += 1) for (let y = 0; y < 40; y += 1) if (isClearing(x, y)) cells += 1;
-  assert.ok(cells > 300 && cells < 800, `clearing has ${cells} cells`);
+  assert.equal(isClearing(-1, CY), false);
+  assert.equal(isClearing(GRID - 1, GRID - 1), false);
+  const cells = clearingCells(0).length;
+  assert.ok(cells > 250 && cells < 500, `clearing has ${cells} cells`);
+});
+
+test('the woods step back when the ground is crowded, and never past the grid', () => {
+  const world = seeded();
+  assert.equal(shouldGrow(world), false);
+  const cells = clearingCells(0);
+  let id = 100;
+  for (const cell of cells) {
+    if ((world.groundRoomCells().length + world.things.size) / cells.length > GROWTH_AT) break;
+    if (canPlace(world, 'stone', cell.x, cell.y).ok || !world.thingAt(cell.x, cell.y) && world.stackAt(cell.x, cell.y).length === 0) {
+      world.addThing({ id: id += 1, kind: 'stone', x: cell.x, y: cell.y, placedAt: NOW });
+    }
+  }
+  assert.equal(shouldGrow(world), true);
+  const before = clearingCells(world.growth).length;
+  world.growth += 1;
+  assert.ok(clearingCells(world.growth).length > before);
+  assert.equal(shouldGrow(world), false, 'one step makes room again');
+  world.growth = MAX_GROWTH;
+  assert.equal(shouldGrow(world), false);
+  for (const cell of clearingCells(MAX_GROWTH)) {
+    assert.ok(cell.x >= 2 && cell.y >= 2 && cell.x < GRID - 2 && cell.y < GRID - 2, 'the largest clearing stays inside the grid');
+  }
+  assert.equal(isClearing(CX + 14, CY, 0), false);
+  assert.equal(isClearing(CX + 14, CY, 6), true);
 });
 
 test('the entry point is on the clearing and a path reaches every seeded doorstep', () => {
@@ -56,19 +88,19 @@ test('the entry point is on the clearing and a path reaches every seeded doorste
 
 test('building needs connection to the settlement and respects the height cap', () => {
   const world = seeded();
-  assert.equal(canBuild(world, 20, 20).ok, false, 'the well is reserved');
+  assert.equal(canBuild(world, CX, CY).ok, false, 'the well is reserved');
   assert.equal(canBuild(world, 5, 5).ok, false, 'the forest is outside');
-  const detached = canBuild(world, 25, 25);
+  const detached = canBuild(world, CX + 5, CY + 5);
   assert.equal(detached.ok, false);
   assert.equal(detached.ok ? '' : detached.reason, 'detached');
-  const beside = canBuild(world, 22, 18);
+  const beside = canBuild(world, CX + 2, CY - 2);
   assert.deepEqual(beside, { ok: true, z: 0 });
-  const stacked = canBuild(world, 20, 18);
+  const stacked = canBuild(world, CX, CY - 2);
   assert.deepEqual(stacked, { ok: true, z: 2 });
   for (let z = 2; z <= MAX_HEIGHT; z += 1) {
-    world.addRoom({ id: 100 + z, x: 20, y: 18, z, hue: 'ochre', roof: 'flat', litAt: 0, lights: 0, sign: new Array(SIGN_CELLS).fill(0) });
+    world.addRoom({ id: 100 + z, x: CX, y: CY - 2, z, hue: 'ochre', roof: 'flat', litAt: 0, lights: 0, sign: new Array(SIGN_CELLS).fill(0) });
   }
-  const capped = canBuild(world, 20, 18);
+  const capped = canBuild(world, CX, CY - 2);
   assert.equal(capped.ok, false);
   assert.equal(capped.ok ? '' : capped.reason, 'too-high');
   assert.ok(buildSpots(world).length > 0);
@@ -77,13 +109,13 @@ test('building needs connection to the settlement and respects the height cap', 
 
 test('things sit on free ground near rooms and never on the well', () => {
   const world = seeded();
-  assert.equal(canPlace(world, 'lantern', 20, 20).ok, false);
-  assert.equal(canPlace(world, 'lantern', 21, 21).ok, false, 'already a lantern there');
-  assert.equal(canPlace(world, 'lantern', 19, 19).ok, true);
-  const far = canPlace(world, 'lantern', 28, 20);
+  assert.equal(canPlace(world, 'lantern', CX, CY).ok, false);
+  assert.equal(canPlace(world, 'lantern', CX + 1, CY + 1).ok, false, 'already a lantern there');
+  assert.equal(canPlace(world, 'lantern', CX - 1, CY - 1).ok, true);
+  const far = canPlace(world, 'lantern', CX + 8, CY);
   assert.equal(far.ok, false);
   assert.equal(far.ok ? '' : far.reason, 'far');
-  assert.equal(canPlace(world, 'dragon', 19, 19).ok, false);
+  assert.equal(canPlace(world, 'dragon', CX - 1, CY - 1).ok, false);
   const spots = placeSpots(world, 'stone');
   assert.ok(spots.length > 10);
   assert.ok(spots.every((spot) => canPlace(world, 'stone', spot.x, spot.y).ok));

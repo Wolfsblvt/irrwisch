@@ -11,6 +11,16 @@ interface Env {
   CLEARING: DurableObjectNamespace<Clearing>;
   ASSETS: Fetcher;
   RATE_IP?: RateLimit;
+  /** Operator moderation secret, set by Wolf Ops with `wrangler secret put ADMIN_TOKEN`. Unset means no admin routes. */
+  ADMIN_TOKEN?: string;
+}
+
+/** Compare two strings without leaking where they differ. */
+function sameSecret(given: string, expected: string): boolean {
+  if (given.length !== expected.length) return false;
+  let difference = 0;
+  for (let index = 0; index < expected.length; index += 1) difference |= given.charCodeAt(index) ^ expected.charCodeAt(index);
+  return difference === 0;
 }
 
 export default {
@@ -32,6 +42,12 @@ export default {
         const { success } = await env.RATE_IP.limit({ key: address });
         if (!success) return new Response('Too many arrivals from here. Try again in a minute.', { status: 429 });
       }
+      return env.CLEARING.getByName('main').fetch(request);
+    }
+    if (url.pathname.startsWith('/api/admin/')) {
+      const expected = env.ADMIN_TOKEN;
+      const given = (request.headers.get('authorization') ?? '').replace(/^Bearer /u, '');
+      if (!expected || expected.length < 24 || !sameSecret(given, expected)) return new Response('Not found.', { status: 404 });
       return env.CLEARING.getByName('main').fetch(request);
     }
     if (url.pathname.startsWith('/api/')) {

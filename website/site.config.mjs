@@ -1,17 +1,17 @@
 export default {
-  title: 'Lichtung',
+  title: 'Irrwisch',
   description: 'A small clearing in the woods that exists only because people came by. Every visitor leaves a light; some build, chalk or move something. Nothing is ever torn down.',
-  // Placeholder that satisfies the publish check. Wolf Ops replaces it with the
-  // canonical Wolf-owned hostname before the first publication (docs/DEPLOYMENT.md).
-  url: 'https://lichtung.wolfsblvt.workers.dev',
+  // Recommended canonical Home (free at Cloudflare Registrar on 2026-11-16, not yet bought).
+  // Change this one line if Wolf selects another hostname (docs/DEPLOYMENT.md).
+  url: 'https://irrwisch.com',
   docs: {
     mode: 'none',
-    surfaceName: 'Lichtung',
+    surfaceName: 'Irrwisch',
   },
   identity: {
-    productName: 'Lichtung',
-    hostSiteName: 'Lichtung',
-    surfaceName: 'Lichtung',
+    productName: 'Irrwisch',
+    hostSiteName: 'Irrwisch',
+    surfaceName: 'Irrwisch',
     descriptor: { text: null, persist: false },
     defaultLanguage: 'en',
     defaultLocale: 'en_US',
@@ -23,8 +23,8 @@ export default {
       touch: '/apple-touch-icon.png',
     },
     social: {
-      fallbackImage: '/social/generated/home.png',
-      markText: 'Lichtung',
+      fallbackImage: '/social/home.png',
+      markText: 'Irrwisch',
       colors: {
         background: '#0b0f1a',
         panel: '#161c2c',
@@ -37,7 +37,7 @@ export default {
       kind: 'site',
     },
   },
-  terms: false,
+  terms: true,
   publisher: 'Wolfsblvt Works',
   openSource: false,
   links: { source: null, releases: null, status: null, security: null, licences: null },
@@ -46,7 +46,7 @@ export default {
     { title: 'Learn', links: [{ label: 'Wolfsblvt Works', href: 'https://wolfsblvt.works/' }] },
   ],
   legal: {
-    lastUpdated: '2026-11-06',
+    lastUpdated: '2026-11-16',
     contact: null,
     impressum: {
       directContact: null,
@@ -56,11 +56,21 @@ export default {
       hosting: 'The page and its live connection run on Cloudflare Workers, operated by Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA. To deliver the page, open the WebSocket and protect the service, Cloudflare receives your IP address, the requested URL, browser headers and timing, and keeps its own edge logs under its own retention. We run no analytics and keep no request logs of our own.',
       purposeAndBasis: 'Delivering the page you asked for and keeping it available and abuse-resistant, on the basis of Art. 6(1)(f) GDPR: our legitimate interest in operating a stable public page. While you connect, a Cloudflare rate-limit counter uses your network address to cap how many arrivals come from one address per minute; that count lives in Cloudflare memory for the minute and is never written into the clearing.',
       recipientsAndTransfers: 'Cloudflare, Inc. acts as our hosting processor. Requests are answered from the Cloudflare location nearest to you, which may be outside the EU. For those transfers Cloudflare relies on its participation in the EU-US Data Privacy Framework and on standard contractual clauses, both documented in its Data Processing Addendum, which it publishes.',
-      retention: 'We store no personal data. What you leave in the clearing (a lit window, worn ground, a room, a thing on the ground, chalk cells, a nudged creature) is anonymous, public and permanent by design and carries no identifier that links it to you. Cloudflare edge logs follow Cloudflare retention.',
+      retention: 'We store no personal data. What you leave in the clearing (a lit window, worn ground, a room, a thing on the ground, chalk cells, a nudged creature) is anonymous and public, carries no identifier that links it to you, and stays for as long as the place exists unless the operator removes unlawful or hateful content. Because nothing links a contribution to a person, we cannot find or delete "your" contributions on request. Cloudflare edge logs follow Cloudflare retention.',
       provision: 'Nothing has to be provided. Without the ordinary request metadata the page cannot be delivered; without an open connection you can look at the clearing but not add to it.',
       storage: 'None. The page sets no cookies and uses no localStorage, sessionStorage, IndexedDB or comparable storage. The only thing on your device is the ordinary browser cache of the page files, which is strictly necessary to show the page you requested (§ 25(2) TDDDG).',
       contact: 'If you write to the addresses on this page or through the shared contact form, we process what you send (your address, a name if you give one, your message) to answer you, on the basis of Art. 6(1)(f) GDPR, our interest in handling enquiries. Correspondence is kept as long as the matter needs and for statutory record duties. None of it is required to use the clearing.',
     },
-    terms: null,
+    terms: {
+      service: 'Irrwisch is a free, non-commercial web page that shows one shared night clearing. Visiting it lights a window; visitors may also build a room, place a thing, chalk slate cells, nudge a creature and wave. There are no accounts, no payments and no guaranteed features.',
+      formation: 'Using the page does not require registration or agreement to a paid contract. These Terms describe the conditions under which the page is offered; by contributing to the clearing you accept them for that contribution.',
+      eligibility: 'Anyone may visit. If you are under the age at which you may agree to such terms on your own where you live, use the page only with the consent of a parent or guardian.',
+      contributions: 'Everything you add is anonymous, visible to every visitor and meant to stay. It cannot be attributed to you, and it cannot be taken back or edited afterwards, by you or on request. You allow the operator to store, display and reproduce what you add as part of the clearing, including in pictures of it, without payment and for as long as the place exists. Add only what you are allowed to add.',
+      removal: 'The operator may wipe a slate or remove a thing that is unlawful, hateful or harassing, and may reset or repair the clearing after abuse or technical damage. If you see something that should not be there, please say so.',
+      availability: 'The page is provided as it is, without any promise of availability, continuity or preservation of the clearing. Contributions per visit and arrivals per network address are limited, and the limits may change.',
+      suspension: 'The operator may limit or block access that harms the service or breaks these Terms, and may pause or end the page at any time. Ending the page ends the clearing; no copy of it is owed to anyone.',
+      changes: 'The page, its rules and these Terms may change. The effective date above shows the current version; mandatory rights remain unaffected.',
+      liability: null,
+    },
   },
 };

@@ -33,6 +33,7 @@ import {
   placeSpots,
   roofFor,
   seedSnapshot,
+  shouldGrow,
 } from '../src/shared/world.ts';
 import { type ClientMessage, type Delta, type Omen, type ServerMessage, isClientMessage } from '../src/shared/protocol.ts';
 
@@ -80,6 +81,46 @@ export class Clearing extends DurableObject {
         return new Response('Expected a WebSocket upgrade.', { status: 426 });
       }
       return this.openSession();
+    }
+    if (url.pathname.startsWith('/api/admin/')) return this.admin(request, url);
+    return new Response('Not found.', { status: 404 });
+  }
+
+  /**
+   * Operator moderation. The Worker entry has already checked the bearer
+   * token; nothing here is reachable without it. The only removals the place
+   * knows: wiping one slate and taking one thing off the ground.
+   */
+  private admin(request: Request, url: URL): Response {
+    if (url.pathname === '/api/admin/slates' && request.method === 'GET') {
+      const world = this.world();
+      const lines: string[] = [];
+      for (const room of world.rooms.values()) {
+        if (!room.sign.some((cell) => cell !== 0)) continue;
+        lines.push(`room ${room.id} at (${room.x},${room.y}) level ${room.z}`);
+        for (let row = 7; row >= 0; row -= 1) {
+          lines.push(`  ${room.sign.slice(row * 8, row * 8 + 8).map((cell) => (cell === 1 ? '#' : cell === 2 ? 'o' : '.')).join('')}`);
+        }
+      }
+      for (const thing of world.things.values()) lines.push(`thing ${thing.id} ${thing.kind} at (${thing.x},${thing.y})`);
+      return new Response(`${lines.join('\n')}\n`, { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } });
+    }
+    if (request.method !== 'POST') return new Response('Method not allowed.', { status: 405 });
+    if (url.pathname === '/api/admin/wipe') {
+      const id = Number(url.searchParams.get('room'));
+      const exists = this.sql.exec<{ id: number }>('SELECT id FROM rooms WHERE id = ?', id).toArray().length > 0;
+      if (!exists) return new Response('No such room.', { status: 404 });
+      this.sql.exec('UPDATE rooms SET sign = ? WHERE id = ?', encodeSign(blankSign()), id);
+      this.broadcast([{ k: 'wipe', room: id }]);
+      return Response.json({ ok: true, wiped: id });
+    }
+    if (url.pathname === '/api/admin/remove-thing') {
+      const id = Number(url.searchParams.get('id'));
+      const exists = this.sql.exec<{ id: number }>('SELECT id FROM things WHERE id = ?', id).toArray().length > 0;
+      if (!exists) return new Response('No such thing.', { status: 404 });
+      this.sql.exec('DELETE FROM things WHERE id = ?', id);
+      this.broadcast([{ k: 'gone', thing: id }]);
+      return Response.json({ ok: true, removed: id });
     }
     return new Response('Not found.', { status: 404 });
   }
@@ -238,8 +279,18 @@ export class Clearing extends DurableObject {
     } else {
       const spots = buildSpots(world);
       if (spots.length === 0) return { ok: false, reason: 'full' };
+      // Prefer the ground and low stacks, so a place left to chance sprawls like a village instead of one tower.
       const random = createRandom(hashInts(session.id, now & 0xffff, 5));
-      spot = spots[Math.floor(random() * spots.length)];
+      const weights = spots.map((candidate) => 1 / ((candidate.z + 1) * (candidate.z + 1)));
+      let roll = random() * weights.reduce((sum, weight) => sum + weight, 0);
+      spot = spots[spots.length - 1];
+      for (let index = 0; index < spots.length; index += 1) {
+        roll -= weights[index];
+        if (roll <= 0) {
+          spot = spots[index];
+          break;
+        }
+      }
       note = 'chosen';
     }
     const hue = ROOM_HUES[hashInts(spot.x, spot.y, spot.z + session.id) % ROOM_HUES.length];
@@ -259,7 +310,8 @@ export class Clearing extends DurableObject {
       room.id, room.x, room.y, room.z, room.hue, room.roof, room.litAt, room.lights, encodeSign(room.sign),
     );
     session.budgets.build -= 1;
-    return { ok: true, deltas: [{ k: 'room', room }], note };
+    world.addRoom(room);
+    return { ok: true, deltas: [{ k: 'room', room }, ...this.maybeGrow(world)], note };
   }
 
   private place(message: Extract<ClientMessage, { t: 'place' }>, session: Session, now: number): HandleResult {
@@ -285,7 +337,8 @@ export class Clearing extends DurableObject {
       thing.id, thing.kind, thing.x, thing.y, thing.placedAt,
     );
     session.budgets.place -= 1;
-    return { ok: true, deltas: [{ k: 'thing', thing }], note };
+    world.addThing(thing);
+    return { ok: true, deltas: [{ k: 'thing', thing }, ...this.maybeGrow(world)], note };
   }
 
   private chalk(message: Extract<ClientMessage, { t: 'chalk' }>, session: Session): HandleResult {
@@ -322,8 +375,17 @@ export class Clearing extends DurableObject {
     const rooms = [...world.rooms.values()];
     const random = createRandom(hashInts(session.id, now & 0xffff, 8));
     const room = rooms[Math.floor(random() * rooms.length)];
-    const at = room ? (doorstep(world, room) ?? { x: room.x, y: room.y }) : entryPoint();
+    const at = room ? (doorstep(world, room) ?? { x: room.x, y: room.y }) : entryPoint(world.growth);
     return { ok: true, deltas: [{ k: 'wave', at }] };
+  }
+
+  /** When the ground gets crowded the woods step back one cell, for everyone. */
+  private maybeGrow(world: World): Delta[] {
+    if (!shouldGrow(world)) return [];
+    const growth = world.growth + 1;
+    world.growth = growth;
+    this.setMeta('growth', String(growth));
+    return [{ k: 'grow', growth }];
   }
 
   /** Every connection is an arrival: a walker, worn ground, a lit window. */
@@ -336,7 +398,7 @@ export class Clearing extends DurableObject {
     const quiet = rooms.filter((room) => room.lights <= least + 1);
     const room = quiet[Math.floor(random() * quiet.length)];
     const step = doorstep(world, room);
-    const path = step ? findPath(world, entryPoint(), step) : [];
+    const path = step ? findPath(world, entryPoint(world.growth), step) : [];
     const worn: Array<Point & { wear: number }> = [];
     for (const cell of path) {
       const wear = world.addWear(cell.x, cell.y);
@@ -468,6 +530,7 @@ export class Clearing extends DurableObject {
       createdAt: Number(this.meta('created_at') ?? 0),
       now: Date.now(),
       visits: Number(this.meta('visits') ?? 0),
+      growth: Number(this.meta('growth') ?? 0),
       rooms,
       things,
       creatures,
