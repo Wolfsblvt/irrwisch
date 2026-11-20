@@ -128,7 +128,15 @@ reach neither. The API reads Always Use HTTPS as on and the `workers.dev` route 
 ## Moderating the place
 
 The only removals the product knows are wiping one slate and taking one thing off the ground. Both need
-`ADMIN_TOKEN`, which Wolf sets in the Worker's settings as a secret, or with Wrangler:
+`ADMIN_TOKEN`.
+
+**Custody.** `ADMIN_TOKEN` is a credential owned by a service the Company built, so a coworker may issue, install
+and rotate it; it is not Wolf's to type. Its home is the Bitwarden Secrets Manager, like every secret of the
+estate, where Wolf and later coworkers can both use it. The value must never pass through a chat, a tool result or
+the repository. The route that satisfies all of that runs where the estate's Bitwarden client lives (the Wolf Ops
+`bitwarden-secrets` module on Geralt): generate the value there, admit it, and set it on the Worker in the same
+process. A cloud session has no Bitwarden route and cannot do this; the first cut was built in one, which is the
+only reason the secret does not exist yet. Setting it by hand works too:
 
 ```bash
 npx wrangler secret put ADMIN_TOKEN --config wrangler.jsonc
@@ -174,7 +182,8 @@ object.
 
 ## Still open
 
-- `ADMIN_TOKEN` is not set, so operator removal is not available yet.
+- `ADMIN_TOKEN` is not set, so operator removal is not available yet. It needs one session with a Bitwarden route
+  (see "Moderating the place").
 - Steady-state publishing: Route A's workflow needs a Cloudflare token as a repository secret and
   `WEBSITE_TARGET=workers`; until then each cut is a manual Route B run. Nothing forces this: the site runs
   without it.
