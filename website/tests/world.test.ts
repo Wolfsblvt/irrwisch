@@ -173,3 +173,12 @@ test('saplings grow by age; a hand holds three distinct kinds', () => {
   assert.equal(hand.length, 3);
   assert.equal(new Set(hand).size, 3);
 });
+
+test('an address is remembered by its household part only', async () => {
+  const { addressBucket } = await import('../src/shared/guest.ts');
+  assert.equal(addressBucket('203.0.113.7'), '203.0.113.7');
+  assert.equal(addressBucket('2001:0db8:00aa:0001:1111:2222:3333:4444'), '2001:db8:aa:1::/64');
+  assert.equal(addressBucket('2001:db8:aa:1:ffff:eeee:dddd:cccc'), '2001:db8:aa:1::/64');
+  assert.equal(addressBucket('2001:db8::1'), '2001:db8:0:0::/64');
+  assert.notEqual(addressBucket('2001:db8:aa:2::1'), addressBucket('2001:db8:aa:1::1'));
+});

@@ -16,7 +16,8 @@ building session, through Wolf's authenticated Cloudflare connection and on his 
 | Account | `aa56f14b292022dd7f284e2bb0c7e259` (Wolfsblvt) |
 | Zone | `irrwisch.com`, id `775b4007819670ec649ff5ea2ec818df`, Free plan, registered at Cloudflare Registrar |
 | Worker | `irrwisch`; `workers.dev` and preview URLs off |
-| First cut | deployment `09126bcb-aaf1-4b96-88f0-ebe2dd295800`, version `455afbeb-079d-425a-9ac7-6f7d00c7fdc1`, built from commit `26e846c` |
+| First cut | 2026-11-19: deployment `09126bcb-aaf1-4b96-88f0-ebe2dd295800`, version `455afbeb-079d-425a-9ac7-6f7d00c7fdc1`, built from commit `26e846c` |
+| Current cut | 2026-11-20: deployment `7c618c62-0104-4885-800e-63514aab5b60`, version `1e310f96-d151-459f-83b5-fa02cc33adc6`: one allowance and one counted visit per address per night |
 | Custom domain | `irrwisch.com` attached to the Worker, id `17cba2736ee048e63cd81250a38bce1dff117872` |
 | `www` | proxied `AAAA 100::` record `641e56d76d52a474e34532b672034f7d`; redirect ruleset `a6eb161fd2b74b289ddc5cecb8d09973`, rule `05fe78460532494893e9422768897732`: 301 to the apex, path and query kept |
 | Durable Object | class `Clearing`, binding `CLEARING`, instance `main`, SQLite backend, migration tag `v1` (applied) |
@@ -101,6 +102,9 @@ Checked on 2026-11-20 after the first cut, from the building session:
 - `GET /api/admin/slates` answers 404 (no secret set).
 - `https://www.irrwisch.com/terms/?a=1` answers 301 to `https://irrwisch.com/terms/?a=1`.
 - After the zone settings above, the pages request nothing outside `irrwisch.com`.
+- Second cut: a connection from an address the clearing already knew that night answered `returning: true` with the
+  visit count unchanged. The building session's outbound address changes on every connection, so the full
+  reload-in-one-browser behaviour was proven against a local Worker and not from a single live browser.
 
 **Not checked from the building session:** plain HTTP on port 80 and the `workers.dev` hostname. Its network could
 reach neither. The API reads Always Use HTTPS as on and the `workers.dev` route as disabled.

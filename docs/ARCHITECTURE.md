@@ -24,7 +24,9 @@ invariants; the one idea that organises it is that the world has exactly one wri
 2. The client opens `wss://…/api/ws`. The Worker checks the rate-limit binding with the connecting address as key
    (counted in Cloudflare memory for one minute, never stored) and forwards the upgrade to the `Clearing` object named
    `main`.
-3. The object accepts the socket with the hibernation API, deals a hand of three things, sends `hello` with a fresh
+3. The object hashes the connecting address with its own salt and looks the hash up in `guests`. A known guest
+   (same address within twelve hours) gets the allowance and hand it had left and causes no arrival. For a new one
+   the object accepts the socket with the hibernation API, deals a hand of three things, sends `hello` with a fresh
    snapshot and the connection's budgets, then performs the arrival: picks a quiet room, finds a path from the entry
    cell to its doorstep, increments wear on every cell of the path, lights the window, increments the visit count.
    Those four deltas go to every open socket, so other watchers see the figure walk in.
@@ -39,9 +41,12 @@ invariants; the one idea that organises it is that the world has exactly one wri
 
 ## Data and storage
 
-The object's SQLite database holds five tables: `meta` (version, counters, visit total, growth, last activity,
+The object's SQLite database holds six tables: `meta` (version, counters, visit total, growth, last activity,
 current omen), `rooms` (position, stack level, hue, roof, last lit time, light count, the 64-cell slate as a digit string),
-`things` (kind, position, placed time), `creatures` (position, facing, last move) and `tiles` (wear per ground cell).
+`things` (kind, position, placed time), `creatures` (position, facing, last move) `tiles` (wear per ground cell) and `guests` (salted hash of the address bucket, first arrival time, remaining
+allowance, dealt hand). `guests` is the only table that is about a person and the only one that forgets: rows are
+deleted twelve hours after the first arrival, on the next arrival or alarm. Nothing links a guest row to a room, a
+thing or a chalk cell.
 Growth of saplings and the glow of windows are not stored; both derive from age at render time.
 
 Cloudflare keeps point-in-time recovery for SQLite-backed objects for thirty days. The snapshot route is also the

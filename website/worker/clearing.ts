@@ -6,6 +6,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { createRandom, hashInts } from '../src/shared/rng.ts';
 import {
+  THING_KINDS,
   type Budgets,
   type Creature,
   FRESH_BUDGETS,
@@ -35,10 +36,13 @@ import {
   seedSnapshot,
   shouldGrow,
 } from '../src/shared/world.ts';
+import { NIGHT_MS, addressBucket } from '../src/shared/guest.ts';
 import { type ClientMessage, type Delta, type Omen, type ServerMessage, isClientMessage } from '../src/shared/protocol.ts';
 
 interface Session {
   id: number;
+  /** Salted hash of the address bucket; the allowance lives in the `guests` row under it. */
+  guest: string;
   budgets: Budgets;
   hand: ThingKind[];
   lastActionAt: number;
@@ -80,7 +84,7 @@ export class Clearing extends DurableObject {
       if (request.headers.get('upgrade') !== 'websocket') {
         return new Response('Expected a WebSocket upgrade.', { status: 426 });
       }
-      return this.openSession();
+      return this.openSession(request);
     }
     if (url.pathname.startsWith('/api/admin/')) return this.admin(request, url);
     return new Response('Not found.', { status: 404 });
@@ -125,24 +129,37 @@ export class Clearing extends DurableObject {
     return new Response('Not found.', { status: 404 });
   }
 
-  private openSession(): Response {
+  private async openSession(request: Request): Promise<Response> {
+    const guest = await this.guestKey(request);
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     const now = Date.now();
     const id = this.nextId('session');
     const random = createRandom(hashInts(id, now & 0xffff, 9));
+
+    // One allowance and one counted visit per address per night. A reload,
+    // a second tab or a reconnect picks up where the first arrival left off.
+    this.sql.exec('DELETE FROM guests WHERE since <= ?', now - NIGHT_MS);
+    const known = this.guestBudgets(guest);
     const session: Session = {
       id,
-      budgets: { ...FRESH_BUDGETS },
-      hand: dealHand(random),
+      guest,
+      budgets: known?.budgets ?? { ...FRESH_BUDGETS },
+      hand: known?.hand ?? dealHand(random),
       lastActionAt: 0,
       lastWaveAt: 0,
     };
+    if (!known) {
+      this.sql.exec(
+        'INSERT INTO guests (key, since, build, place, chalk, nudge, hand) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        guest, now, session.budgets.build, session.budgets.place, session.budgets.chalk, session.budgets.nudge, session.hand.join(','),
+      );
+    }
     this.ctx.acceptWebSocket(server);
     server.serializeAttachment(session);
     this.sessions.set(server, session);
 
-    const arrival = this.arrive(now, random);
+    const arrival = known ? [] : this.arrive(now, random);
     const hello: ServerMessage = {
       t: 'hello',
       world: this.snapshot(),
@@ -151,6 +168,7 @@ export class Clearing extends DurableObject {
       presence: this.ctx.getWebSockets().length,
       omen: this.currentOmen(now),
       you: id,
+      returning: known !== null,
     };
     server.send(JSON.stringify(hello));
     this.broadcast([...arrival, { k: 'presence', count: this.ctx.getWebSockets().length }]);
@@ -188,7 +206,16 @@ export class Clearing extends DurableObject {
       return;
     }
     session.lastActionAt = now;
+    // Another tab from the same address may have spent some of the allowance.
+    const shared = session.guest ? this.guestBudgets(session.guest) : null;
+    if (shared) session.budgets = shared.budgets;
     const result = this.handle(message, session, now);
+    if (result.ok && session.guest) {
+      this.sql.exec(
+        'UPDATE guests SET build = ?, place = ?, chalk = ?, nudge = ? WHERE key = ?',
+        session.budgets.build, session.budgets.place, session.budgets.chalk, session.budgets.nudge, session.guest,
+      );
+    }
     socket.serializeAttachment(session);
     if (result.ok) {
       this.reply(socket, { t: 'ack', of: message.t, budgets: session.budgets, note: result.note });
@@ -212,6 +239,7 @@ export class Clearing extends DurableObject {
 
   async alarm(): Promise<void> {
     const now = Date.now();
+    this.sql.exec('DELETE FROM guests WHERE since <= ?', now - NIGHT_MS);
     const world = this.world();
     const deltas: Delta[] = [];
     const random = createRandom(hashInts(now & 0xffffff, 3, 17));
@@ -246,6 +274,34 @@ export class Clearing extends DurableObject {
     const open = this.ctx.getWebSockets().length > 0;
     const active = open || now - lastTouch < ACTIVE_WINDOW_MS;
     await this.ctx.storage.setAlarm(now + (active ? TICK_ACTIVE_MS : TICK_IDLE_MS));
+  }
+
+  // ----- Guests ------------------------------------------------------------
+
+  /**
+   * The key one address is remembered under for a night: a salted SHA-256 of
+   * its bucket. The address itself is never stored.
+   */
+  private async guestKey(request: Request): Promise<string> {
+    let salt = this.meta('guest_salt');
+    if (!salt) {
+      salt = [...crypto.getRandomValues(new Uint8Array(16))].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+      this.setMeta('guest_salt', salt);
+    }
+    const bucket = addressBucket(request.headers.get('cf-connecting-ip') ?? 'unknown');
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${salt}|${bucket}`));
+    return [...new Uint8Array(digest)].slice(0, 16).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  private guestBudgets(guest: string): { budgets: Budgets; hand: ThingKind[] } | null {
+    const row = this.sql
+      .exec<GuestRow>('SELECT since, build, place, chalk, nudge, hand FROM guests WHERE key = ?', guest)
+      .toArray()[0];
+    if (!row || row.since <= Date.now() - NIGHT_MS) return null;
+    return {
+      budgets: { build: row.build, place: row.place, chalk: row.chalk, nudge: row.nudge },
+      hand: row.hand.split(',').filter((kind): kind is ThingKind => THING_KINDS.includes(kind as ThingKind)),
+    };
   }
 
   // ----- Actions -----------------------------------------------------------
@@ -493,6 +549,10 @@ export class Clearing extends DurableObject {
         id INTEGER PRIMARY KEY, x INTEGER NOT NULL, y INTEGER NOT NULL, facing INTEGER NOT NULL, moved_at INTEGER NOT NULL
       );
       CREATE TABLE IF NOT EXISTS tiles (x INTEGER NOT NULL, y INTEGER NOT NULL, wear INTEGER NOT NULL, PRIMARY KEY (x, y));
+      CREATE TABLE IF NOT EXISTS guests (
+        key TEXT PRIMARY KEY, since INTEGER NOT NULL, build INTEGER NOT NULL, place INTEGER NOT NULL,
+        chalk INTEGER NOT NULL, nudge INTEGER NOT NULL, hand TEXT NOT NULL
+      );
     `);
     if (this.meta('version') === null) this.seed(Date.now());
   }
@@ -602,6 +662,8 @@ type RoomRow = {
   lights: number;
   sign: string;
 };
+type GuestRow = { since: number; build: number; place: number; chalk: number; nudge: number; hand: string };
+
 type ThingRow = {
   id: number;
   kind: string;

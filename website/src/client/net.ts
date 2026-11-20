@@ -1,7 +1,7 @@
 /**
- * One WebSocket to the clearing. Reconnects a few times with backoff; every
- * reconnection is a fresh arrival on the server, so the client does not
- * retry forever.
+ * One WebSocket to the clearing. Reconnects a few times with backoff. The
+ * server recognises a reconnection within the same night, so it is neither a
+ * new visit nor a new allowance; the client still does not retry forever.
  */
 import type { ClientMessage, ServerMessage } from '../shared/protocol.ts';
 

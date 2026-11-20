@@ -79,11 +79,11 @@ SQLite database, neither of which is close.
 
 ## The visitor's device stores nothing
 
-**Date:** 2026-11-06 · **Status:** Current
+**Date:** 2026-11-06 · **Status:** Current for the device, narrowed on 2026-11-20
 
-No cookies, no localStorage, no sessionStorage, no IndexedDB. Identity exists only for the lifetime of one WebSocket
-connection; budgets are per connection; abuse limits use the network address transiently through the Cloudflare
-rate-limit binding and are never written to the world.
+No cookies, no localStorage, no sessionStorage, no IndexedDB. The device half of this decision stands. The server
+half ("identity exists only for one connection, budgets are per connection") was replaced on 2026-11-20 by "One
+allowance per address per night".
 
 **Why.** Any device storage would be optional under § 25 TDDDG and would therefore need a consent choice and banner,
 which the page should not have. Wolf's legal defaults prefer no consent-requiring storage. The price is that a
@@ -244,3 +244,30 @@ the page's own promise false.
 **Rejected.** Keeping the beacon and disclosing it: the product has no use for the numbers.
 
 **Reopen if.** Wolf wants visit analytics badly enough to rewrite the Privacy page first.
+
+## One allowance per address per night
+
+**Date:** 2026-11-20 · **Status:** Current, replaces per-connection budgets
+
+The clearing remembers a visitor for twelve hours by a salted SHA-256 of the connecting address (the whole IPv4
+address, the /64 prefix for IPv6), kept in the Durable Object with the remaining allowance and the dealt hand.
+Within that night a reload, a second tab or a reconnect is the same guest: no new counted visit, no new walker, no
+new light, no fresh allowance. The row is deleted after the night and is linked to nothing the guest made.
+
+**Why.** Wolf pressed F5 minutes after the first cut and had twelve new chalk cells. With budgets on the connection,
+one person could fill a slate in six reloads and build a dozen rooms a minute, which breaks the founding rule
+"never change too much", and every reload inflated "have walked here". Wolf's verdict on remembering nothing at
+all: "That's kind a stupid", with the instruction that a hashed, private, non-identifying identity lives either on
+the device or on the server.
+
+**Rejected.** A token on the device: an incognito window or cleared storage defeats it, and optional device storage
+needs a consent choice under § 25 TDDDG. An in-memory map in the object: it is lost whenever the object hibernates,
+so waiting ten seconds would reset it. The raw address: not needed, so not kept.
+
+**Consequence.** People behind one shared IPv4 address (a household, an office, some mobile carriers) share one
+allowance and count as one visit per night. The salt sits next to the hashes, so this is pseudonymous, not
+anonymous; the Privacy page says what is kept and for how long. Changing network (Wi-Fi to mobile, a VPN) is a new
+guest, which is accepted: it costs effort per allowance and the arrival rate limit still applies.
+
+**Reopen if.** Shared addresses visibly lock out real visitors, or abuse through address hopping shows up on the
+slates.
