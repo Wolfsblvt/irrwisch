@@ -17,7 +17,9 @@ supplements the shared Leitsatz doctrine and grants no Work or authority.
   into production builds through `WOLFSBLVT_LEGAL_OPERATOR_B64`; never commit or print it.
 - The only deletions are the operator routes behind `ADMIN_TOKEN` (wipe a slate, remove a thing). Never add a
   visitor-facing way to remove or overwrite, and never put the secret in source, logs or `wrangler.jsonc`.
-- Publication is Cloudflare only and carried by Wolf Ops; keep routes and domains out of `wrangler.jsonc`.
+- Publication is Cloudflare only, live at `https://irrwisch.com/`. Both routes are in `docs/DEPLOYMENT.md`; keep
+  routes and domains out of `wrangler.jsonc`. Later uploads must keep the `ADMIN_TOKEN` secret binding.
+- Cloudflare Web Analytics and Email Address Obfuscation stay off on the zone: the Privacy page depends on it.
 - Leitsatz adopted through `deploy-leitsatz-skill-mcp-v0.8.92` (source `2962234f`), last checked 2026-11-16.
 
 ## Commands
@@ -43,8 +45,8 @@ main:
   required pre-integration evidence: none
   required approval/review: none
   resolved conversations: no
-  automatic CI: .github/workflows/product-website.yml — provisional, not yet activated; Wolf Ops carries
-    activation through the handover in docs/DEPLOYMENT.md
+  automatic CI: .github/workflows/product-website.yml — provisional, not yet activated; it needs the
+    repository secrets and variables named in docs/DEPLOYMENT.md
   automatic retained branch effects: Worker deployment from accepted main once the workflow is activated
   other pre-update evidence: none
 ```

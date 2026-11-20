@@ -3,86 +3,116 @@
 ## Meaning
 
 Irrwisch is published as one Cloudflare Worker with static assets and one Durable Object, on Cloudflare only: no
-server, no second provider. This document is the handover packet for Wolf and Wolf Ops, who carry the first live cut,
-the domain, the secrets and public-Home admission. It owns the target shape, the first-publication steps, the
-readback that proves the Home, moderation in operation, rollback, and what stays open. Nothing here claims a
-deployment has happened: as of 2026-11-16 the product is built and verified locally only.
+server, no second provider. This document owns the live shape, how a new cut reaches the Home, the readback that
+proves it, moderation in operation, rollback, and what stays open. The first cut went live on 2026-11-19 from the
+building session, through Wolf's authenticated Cloudflare connection and on his direction.
 
-## Target shape
+## Live shape
 
 | Fact | Value |
 | --- | --- |
+| Canonical Home | `https://irrwisch.com/` (public and indexable). `/impressum/`, `/privacy/`, `/terms/` are public but `noindex, nosnippet` |
 | Provider | Cloudflare only: Workers, Workers Static Assets, one Durable Object, one rate-limit binding, one zone |
-| Account | `aa56f14b292022dd7f284e2bb0c7e259` (Wolfsblvt); no Worker named `irrwisch` existed on 2026-11-16 |
-| Worker | `irrwisch` (`website/wrangler.jsonc`), `workers_dev: false`, `preview_urls: false`, no routes or domains in the file |
-| Durable Object | class `Clearing`, binding `CLEARING`, instance `main`, SQLite backend, migration tag `v1` |
+| Account | `aa56f14b292022dd7f284e2bb0c7e259` (Wolfsblvt) |
+| Zone | `irrwisch.com`, id `775b4007819670ec649ff5ea2ec818df`, Free plan, registered at Cloudflare Registrar |
+| Worker | `irrwisch`; `workers.dev` and preview URLs off |
+| First cut | deployment `09126bcb-aaf1-4b96-88f0-ebe2dd295800`, version `455afbeb-079d-425a-9ac7-6f7d00c7fdc1`, built from commit `26e846c` |
+| Custom domain | `irrwisch.com` attached to the Worker, id `17cba2736ee048e63cd81250a38bce1dff117872` |
+| `www` | proxied `AAAA 100::` record `641e56d76d52a474e34532b672034f7d`; redirect ruleset `a6eb161fd2b74b289ddc5cecb8d09973`, rule `05fe78460532494893e9422768897732`: 301 to the apex, path and query kept |
+| Durable Object | class `Clearing`, binding `CLEARING`, instance `main`, SQLite backend, migration tag `v1` (applied) |
 | Rate limit | binding `RATE_IP`, namespace `1201` (the Works contact form uses 1101 to 1103), 12 arrivals per address per minute per location |
-| Secret | `ADMIN_TOKEN`: at least 24 characters; enables the three operator routes. Unset means they answer 404 |
-| Static assets | `website/artifacts/site/`, `404-page` handling, Worker first only for `/api/*`, `_headers` carries `X-Robots-Tag` for the legal routes |
-| Canonical Home | recommended `https://irrwisch.com/` (free at Cloudflare Registrar on 2026-11-16 for 11.17 USD a year; **not bought**). `website/site.config.mjs` carries it in `url`; change that one line for another hostname |
-| Exposure | public and indexable Home; `/impressum/`, `/privacy/`, `/terms/` public but `noindex, nosnippet` |
+| Secret | `ADMIN_TOKEN`: **not set**. The three operator routes answer 404 until Wolf sets it (at least 24 characters) |
+| Static assets | `website/artifacts/site/`, `404-page` handling, Worker first only for `/api/*`, `X-Robots-Tag` rules for the legal routes |
 | Surface role | one canonical human-facing Home with a small live API under `/api/`; no Docs, no app, no status host |
 
-## First publication
+### Zone settings that carry product promises
 
-Everything runs from `website/` on a machine with Node 22.18 or newer and a Cloudflare credential that may deploy
-Workers on the account (`wrangler login`, or `CLOUDFLARE_API_TOKEN` plus `CLOUDFLARE_ACCOUNT_ID`).
+| Setting | Value | Why |
+| --- | --- | --- |
+| Web Analytics (`rum`) | **off** | Cloudflare switches its browser beacon on for every new zone. The Privacy page says the page loads nothing from third parties and runs no analytics; the beacon was injected for about an hour after the domain went live and was then switched off. Never turn it back on without changing the Privacy page first |
+| Email Address Obfuscation | off | It rewrites addresses on the legal pages into script-decoded placeholders and injects a script |
+| Always Use HTTPS | on | Plain HTTP reaches HTTPS before the Worker |
+| Minimum TLS | 1.2 | |
+| Rocket Loader | off (default) | It would rewrite the page's own module script |
 
-1. **Name.** Buy `irrwisch.com` at Cloudflare Registrar, which creates the zone in the account. For another
-   hostname, set `url` in `site.config.mjs` and commit before building.
-2. **Check the source.**
+## Publishing a new cut
 
-   ```bash
-   npm ci
-   ```
+Two routes exist. Both start the same way, from `website/` with Node 22.18 or newer:
 
-   ```bash
-   npm test
-   ```
+```bash
+npm ci
+```
 
-3. **Deploy.** The legal operator record enters only through the environment of this one command. PowerShell:
+```bash
+npm test
+```
 
-   ```powershell
-   $env:WOLFSBLVT_LEGAL_OPERATOR_B64 = '<production projection from the Wolf Ops route>'; npm run deploy; Remove-Item Env:WOLFSBLVT_LEGAL_OPERATOR_B64
-   ```
+### Route A: Wrangler with a credential
 
-   `npm run deploy` refuses fixture identity and placeholders, builds, compares the built pages with the identity
-   source, then runs `wrangler deploy`. The first deployment creates the Worker, the Durable Object namespace and the
-   rate-limit namespace. The first request seeds the clearing.
-4. **Moderation secret.** Generate a long random value and store it where Ops keeps service-owned secrets, then:
+For a machine with `wrangler login`, or `CLOUDFLARE_API_TOKEN` plus `CLOUDFLARE_ACCOUNT_ID`. The legal operator
+record enters only through the environment of this one command. PowerShell:
 
-   ```bash
-   npx wrangler secret put ADMIN_TOKEN --config wrangler.jsonc
-   ```
+```powershell
+$env:WOLFSBLVT_LEGAL_OPERATOR_B64 = '<production projection from the Wolf Ops route>'; npm run deploy; Remove-Item Env:WOLFSBLVT_LEGAL_OPERATOR_B64
+```
 
-5. **Domain.** Attach `irrwisch.com` to the Worker as a custom domain (provider-native adapter; the zone must be
-   active). Add the `www` name as a proxied record with one permanent redirect to the apex that keeps path and
-   query. Turn on *Always Use HTTPS* for the zone.
-6. **Steady state.** In the GitHub repository set the secrets `CLOUDFLARE_API_TOKEN` and
-   `WOLFSBLVT_LEGAL_OPERATOR_B64` and the variables `CLOUDFLARE_ACCOUNT_ID` and `WEBSITE_TARGET=workers`, then
-   dispatch `.github/workflows/product-website.yml` once. After that, accepted `main` publishes itself whenever a
-   consumed input under `website/` changes; pull requests only run `npm test`.
+`npm run deploy` refuses fixture identity and placeholders, builds, compares the built pages with the identity
+source, then runs `wrangler deploy`. The same route runs unattended once the GitHub repository carries the secrets
+`CLOUDFLARE_API_TOKEN` and `WOLFSBLVT_LEGAL_OPERATOR_B64` and the variables `CLOUDFLARE_ACCOUNT_ID` and
+`WEBSITE_TARGET=workers`: `.github/workflows/product-website.yml` then publishes accepted `main` whenever a consumed
+input under `website/` changes. **That workflow is not activated.**
+
+### Route B: an authenticated Cloudflare connection, no token
+
+This is how the first cut was published, from an agent session that holds a Cloudflare API connection (the
+Cloudflare MCP server) and may reach `api.cloudflare.com`, but has no Wrangler credential.
+
+1. Build with the real operator record in the environment of the one command: `npm run check:publish`.
+2. Bundle the Worker without deploying: `npx wrangler deploy --dry-run --minify --outdir <dir>`.
+3. Write the asset manifest: `node scripts/asset-manifest.mjs`.
+4. Through the connection, `POST /accounts/{account}/workers/scripts/irrwisch/assets-upload-session` with the
+   manifest. The answer carries a short-lived upload token and the buckets of hashes Cloudflare does not hold yet.
+5. Send each bucket to `POST /accounts/{account}/workers/assets/upload?base64=true` with that upload token as the
+   bearer; each form field is named by the hash and holds the base64 file with its content type. The last answer
+   carries the completion token. With nothing new to upload, step 4 answers with the completion token directly.
+6. Through the connection, `PUT /accounts/{account}/workers/scripts/irrwisch` as multipart: the bundle as
+   `index.js` (`application/javascript+module`) and `metadata` with `main_module`, `compatibility_date`, the three
+   bindings from `wrangler.jsonc`, and `assets: { jwt, config: { not_found_handling, run_worker_first, _headers } }`
+   where `_headers` is the text of `artifacts/site/_headers`.
+7. Rebuild without the operator record afterwards so no real identity stays in `artifacts/`.
+
+Two things differ from the first cut on every later one:
+
+- **Send `keep_bindings: ["secret_text"]` in the metadata.** Without it the upload drops `ADMIN_TOKEN`.
+- **Leave `migrations` out** unless a Durable Object class is added, renamed or removed. Tag `v1` is applied.
 
 ## Readback that proves the Home
 
-- `GET /` answers 200 with title `Irrwisch`, canonical and Open Graph URLs on the selected host, and
-  `og:image` at `/social/home.png`.
-- `GET /api/health` answers `ok: true`. `GET /api/world` answers JSON with `version: 1`, `growth: 0` and four seeded
-  rooms around cell 48,48.
-- In a browser a figure walks in, the count goes up by one and a window lights. In a second browser the first sees
-  "someone just arrived."; a wave from one shows "someone waved at you." on the other.
-- `/impressum/`, `/privacy/` and `/terms/` answer 200 with the real operator, `noindex, nosnippet` in the page and
-  in `X-Robots-Tag`, and are absent from `sitemap-0.xml`. `/nope` answers the branded 404.
-- `GET /api/admin/slates` answers 404 without the bearer secret and a text listing with it.
-- Plain HTTP on apex and `www` reaches HTTPS before the Worker; `www` reaches the apex in one hop.
-- `https://irrwisch.wolfsblvt.workers.dev/` does not serve the site.
+Checked on 2026-11-20 after the first cut, from the building session:
 
-Record the Worker version and deployment ids, the custom-domain id, the DNS and redirect rule ids, and the commit
-that was built.
+- `GET /` answers 200 with title `Irrwisch`, canonical and Open Graph URLs on `https://irrwisch.com/`, and
+  `og:image` at `/social/home.png`. `robots.txt`, `sitemap-index.xml` and the social image answer 200.
+- `GET /api/health` answers `ok: true`. `GET /api/world` answers JSON with `version: 1`, `growth: 0` and the four
+  seeded rooms around cell 48,48.
+- In a browser a figure walks in over `wss://irrwisch.com/api/ws`, the count goes up by one and a window lights. A
+  second browser makes the first show "someone just arrived."; its wave shows "someone waved at you." on the first.
+- `/impressum/`, `/privacy/` and `/terms/` answer 200 with `noindex, nosnippet` in `X-Robots-Tag`. `/nope` answers
+  the branded 404. The deployed legal pages were built from the real operator record and compared with it.
+- `GET /api/admin/slates` answers 404 (no secret set).
+- `https://www.irrwisch.com/terms/?a=1` answers 301 to `https://irrwisch.com/terms/?a=1`.
+- After the zone settings above, the pages request nothing outside `irrwisch.com`.
+
+**Not checked from the building session:** plain HTTP on port 80 and the `workers.dev` hostname. Its network could
+reach neither. The API reads Always Use HTTPS as on and the `workers.dev` route as disabled.
 
 ## Moderating the place
 
-The only removals the product knows are wiping one slate and taking one thing off the ground. Both need the secret.
+The only removals the product knows are wiping one slate and taking one thing off the ground. Both need
+`ADMIN_TOKEN`, which Wolf sets in the Worker's settings as a secret, or with Wrangler:
+
+```bash
+npx wrangler secret put ADMIN_TOKEN --config wrangler.jsonc
+```
 
 ```bash
 curl -H "Authorization: Bearer $ADMIN_TOKEN" https://irrwisch.com/api/admin/slates
@@ -98,33 +128,39 @@ curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" "https://irrwisch.com/api/a
 
 The listing prints every non-blank slate as an 8 by 8 picture (`#` white, `o` ember) with its room id, and every
 thing with its id. Open visitors see a wipe or removal immediately. Reports arrive through the Works contact form
-and `legal@wolfsblvt.works`, as the Terms and the about panel say; somebody has to read them.
+and `legal@wolfsblvt.works`, as the Terms and the about panel say; somebody has to read them. **Until the secret
+exists, nothing on the page can be removed without a new deployment.**
 
 ## Limits and cost
 
-- No new subscription. The Worker uses the account's existing Workers plan. The Works production Worker runs with
-  Logpush, which suggests Workers Paid is active; the plan itself was not readable from the building session.
+- No new subscription. The zone is on the Free plan and the Worker uses the account's existing Workers plan, which
+  was not readable from the building session.
 - Every arrival and action reads the whole world from SQLite (rooms, things, creatures, worn tiles). On Workers
   Paid that is far inside the included row reads. On Workers Free (5 million rows read a day) a world of 4,000 rows
   would stop at roughly 600 arrivals a day; the fix is an in-memory world in the object, recorded in
   `docs/ARCHITECTURE.md` as a known compromise.
 - One address may arrive 12 times a minute per Cloudflare location. There is no global cap: a crowd is welcome, a
-  botnet would inflate the visit count and wear the paths. Bot Fight Mode on the zone is an Ops choice.
+  botnet would inflate the visit count and wear the paths. Bot Fight Mode on the zone is an Ops choice; its
+  script-injecting variants would need the Privacy page to say so.
 
 ## Rollback and recovery
 
-Workers keep previous versions: `npx wrangler versions list` and `npx wrangler rollback` return the code to an
-earlier one, and the Durable Object's data is untouched by that. For the world itself Cloudflare keeps thirty days
-of point-in-time recovery on SQLite-backed objects, and `GET /api/world` is a credential-free export of the whole
-clearing. **No restore has been exercised.** After real damage take the export first, then use the storage API's
-point-in-time methods from a one-off script inside the object.
+Workers keep previous versions: `npx wrangler versions list` and `npx wrangler rollback`, or the Versions and
+Deployments view in the dashboard, return the code to an earlier one, and the Durable Object's data is untouched by
+that. For the world itself Cloudflare keeps thirty days of point-in-time recovery on SQLite-backed objects, and
+`GET /api/world` is a credential-free export of the whole clearing. **No restore has been exercised.** After real
+damage take the export first, then use the storage API's point-in-time methods from a one-off script inside the
+object.
 
-## Still open after tonight
+## Still open
 
+- `ADMIN_TOKEN` is not set, so operator removal is not available yet.
+- Steady-state publishing: Route A's workflow needs a Cloudflare token as a repository secret; until then each cut
+  is a manual Route B run.
 - Operational admission under the shared Wolf Ops declaration: private monitor on `/api/health` and the Home marker,
   the decision whether a toy earns a public status entry, the private atlas row.
 - Search Console: a Domain property for the new registrable domain and the sitemap `…/sitemap-index.xml`.
-- A real social unfurl check once the Home is live; the image is a capture of a local clearing.
+- A real social unfurl check; the image is a capture of a local clearing.
 - Identity approval: the mark and wordmark in `brand/` are Tala's working drafts.
 - Legal review: the Privacy and Terms copy is truthful to the data flows and has had no qualified review. Whether
   the page counts as a hosting service that needs a formal notice-and-action form under the Digital Services Act is

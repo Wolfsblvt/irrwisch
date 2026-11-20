@@ -207,18 +207,40 @@ contributions on a server).
 
 **Reopen if.** Qualified legal review asks for different wording, or the page gains accounts, payments or text input.
 
-## Wolf publishes with Wolf Ops, on Cloudflare only
+## Cloudflare only, published from the product seat through Wolf's connection
 
-**Date:** 2026-11-16 · **Status:** Current, supersedes the 2026-11-06 handover decision in detail
+**Date:** 2026-11-19 · **Status:** Current, supersedes "Wolf publishes with Wolf Ops, on Cloudflare only" (2026-11-16)
 
 The whole product runs on Cloudflare: one Worker with static assets, one SQLite Durable Object, one rate-limit
-binding, a Cloudflare zone for the domain. Nothing touches Wolf Server or any other host. The building session
-performs no provider effect; Wolf deploys with Wolf Ops from the packet in `docs/DEPLOYMENT.md`.
+binding, the `irrwisch.com` zone. Nothing touches Wolf Server or any other host. The seat that builds the product
+also publishes it, through the authenticated Cloudflare connection Wolf set up for agent sessions, without a
+Wrangler credential or an API token of its own. `docs/DEPLOYMENT.md` carries both routes and the live record.
 
-**Why.** Wolf declined a Cloudflare token for the building session on 2026-11-06 and asked for a handover; on
-2026-11-16 he said he would deploy that night and wanted hosting on Cloudflare only. The workload fits Workers
-exactly, the account already runs the other product Workers this way, and a toy page does not earn a server.
+**Why.** Wolf bought the domain on 2026-11-19 and said the access was already there and that this should not need
+another agent seat. He was right: the connection can create an asset upload session and upload the Worker, and the
+upload session's own short-lived token carries the files. A toy page does not earn a server, a second seat or a
+long-lived deploy token.
 
-**Rejected.** A bootstrap deployment from the building session. Any origin outside Cloudflare.
+**Rejected.** Waiting for a Wolf Ops handover (the 2026-11-06 and 2026-11-16 position, now history). A Cloudflare API
+token handed to the building session (Wolf declined it twice). Any origin outside Cloudflare.
 
-**Reopen if.** The world outgrows one Durable Object, or the Workers plan limits start refusing visitors.
+**Consequence.** Each cut is a manual run until the GitHub workflow gets a token. Operational admission (monitoring,
+status, atlas) stays Wolf Ops bookkeeping and is not part of publishing.
+
+**Reopen if.** The world outgrows one Durable Object, the Workers plan limits start refusing visitors, or cuts
+become frequent enough that the manual route costs more than a scoped deploy token.
+
+## Cloudflare's own analytics beacon stays off
+
+**Date:** 2026-11-20 · **Status:** Current
+
+Cloudflare enables Web Analytics on every new zone and injects a third-party beacon script into HTML. On
+`irrwisch.com` it is switched off, together with Email Address Obfuscation.
+
+**Why.** The device-stores-nothing decision and the Privacy page promise no analytics and no third-party requests.
+The live readback caught the beacon about an hour after the domain went live; a provider default had quietly made
+the page's own promise false.
+
+**Rejected.** Keeping the beacon and disclosing it: the product has no use for the numbers.
+
+**Reopen if.** Wolf wants visit analytics badly enough to rewrite the Privacy page first.

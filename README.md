@@ -8,7 +8,7 @@
 [![Stack: Astro + Workers](https://img.shields.io/badge/stack-Astro%20%2B%20Cloudflare%20Workers-ff8a3d)](docs/ARCHITECTURE.md)
 [![World: one Durable Object](https://img.shields.io/badge/world-one%20Durable%20Object-6d5bd0)](docs/ARCHITECTURE.md#data-and-storage)
 [![Device storage: none](https://img.shields.io/badge/device%20storage-none-39756a)](docs/DECISIONS.md#the-visitors-device-stores-nothing)
-[![Home: not yet published](https://img.shields.io/badge/home-not%20yet%20published-5c6b8a)](docs/DEPLOYMENT.md)
+[![Home: irrwisch.com](https://img.shields.io/badge/home-irrwisch.com-ff8a3d)](https://irrwisch.com/)
 
 **A small clearing in the woods that exists only because people came by.**
 
@@ -22,11 +22,9 @@ is watching.
 It is one page, drawn live on a canvas, with no account, no name and nothing stored on your device. Walking in takes
 ten seconds; staying a minute or two is the idea.
 
-**[Run it locally](#run-it-yourself)** · [How it is built](docs/ARCHITECTURE.md) · [Where it is going](docs/VISION.md)
+**[Walk in: irrwisch.com](https://irrwisch.com/)** · [Run it locally](#run-it-yourself) · [How it is built](docs/ARCHITECTURE.md) · [Where it is going](docs/VISION.md)
 
-The clearing is not published yet. Wolf and Wolf Ops carry the first live cut, on Cloudflare only, through the
-packet in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). An Irrwisch is a will-o'-the-wisp: a small light wandering the
-woods at night. Every visitor is one.
+An Irrwisch is a will-o'-the-wisp: a small light wandering the woods at night. Every visitor is one.
 
 ![The clearing at night after about sixty simulated visits: a ring of dark conifers around a mossy floor, worn paths, a small village of stacked rooms with lit windows, lanterns, pumpkins, mushrooms and a scarecrow](docs/assets/readme/clearing.png)
 
@@ -67,16 +65,16 @@ removing drift and walking while keeping the place legible.
 
 ## Where it stands
 
-The world runs in one Cloudflare Durable Object and is published as one Worker. The source is built and verified
-locally; publication, the canonical hostname and the GitHub remote are carried by Wolf Ops and Wolf through the
-handover in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) and the decisions in [docs/DECISIONS.md](docs/DECISIONS.md).
+The clearing is live at [irrwisch.com](https://irrwisch.com/) since 2026-11-19. The world runs in one Cloudflare
+Durable Object and is published as one Worker, on Cloudflare only. How a cut gets there and what is still open is in
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md); why it is shaped this way is in [docs/DECISIONS.md](docs/DECISIONS.md).
 The dream, including the parts not built yet, is in [docs/VISION.md](docs/VISION.md).
 
 ## License
 
 Copyright © Wolfsblvt. All rights reserved.
 
-This private repository is not offered under a public or general licence. Its contents may be used, copied, modified,
+This repository is not offered under a public or general licence. Its contents may be used, copied, modified,
 disclosed, or distributed only within permission explicitly granted by the copyright holder. Access to the repository
 or receipt of a copy grants no additional rights. The wordmark lettering derives from Caveat, used under the SIL Open
 Font License 1.1 (`brand/source/irrwisch/caveat-OFL.txt`).

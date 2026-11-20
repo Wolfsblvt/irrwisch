@@ -15,7 +15,7 @@ entry points; it exists because the split between client, shared rules and Worke
 | `website/src/client/` | Canvas renderer, sprites, camera, UI overlay, WebSocket client | Browser-only code; nothing here is trusted by the Worker |
 | `website/worker/` | Worker entry and the `Clearing` Durable Object | The only code that mutates the world |
 | `website/src/pages/` | `index.astro` (the clearing), `impressum/`, `privacy/`, `terms/`, `404.astro` | Astro routes; the four reading pages share `layouts/Site.astro` |
-| `website/scripts/` | Identity model, site assets, publish checks, brand export | Build-time tooling adopted from the shared website starter |
+| `website/scripts/` | Identity model, site assets, publish checks, brand export, asset upload manifest | Build-time tooling adopted from the shared website starter |
 | `website/tests/` | Rule tests run with `node --test` | Pure logic, no framework |
 | `brand/` | Identity masters and exported asset set | Owned by the identity, consumed by the site and the README |
 | `docs/` | Vision, Decisions, Architecture, Development, Deployment, this map | Durable truth that code cannot carry |
