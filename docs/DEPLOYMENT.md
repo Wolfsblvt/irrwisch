@@ -63,7 +63,8 @@ $env:WOLFSBLVT_LEGAL_OPERATOR_B64 = '<production projection from the Wolf Ops ro
 source, then runs `wrangler deploy`. The same route runs unattended once the GitHub repository carries the secrets
 `CLOUDFLARE_API_TOKEN` and `WOLFSBLVT_LEGAL_OPERATOR_B64` and the variables `CLOUDFLARE_ACCOUNT_ID` and
 `WEBSITE_TARGET=workers`: `.github/workflows/product-website.yml` then publishes accepted `main` whenever a consumed
-input under `website/` changes. **That workflow is not activated.**
+input under `website/` changes. **Publishing from the workflow is off**: without `WEBSITE_TARGET=workers` it only
+runs `npm test` on every push and pull request.
 
 ### Route B: an authenticated Cloudflare connection, no token
 
@@ -174,14 +175,16 @@ object.
 ## Still open
 
 - `ADMIN_TOKEN` is not set, so operator removal is not available yet.
-- Steady-state publishing: Route A's workflow needs a Cloudflare token as a repository secret; until then each cut
-  is a manual Route B run.
+- Steady-state publishing: Route A's workflow needs a Cloudflare token as a repository secret and
+  `WEBSITE_TARGET=workers`; until then each cut is a manual Route B run. Nothing forces this: the site runs
+  without it.
 - Operational admission under the shared Wolf Ops declaration: private monitor on `/api/health` and the Home marker,
   the decision whether a toy earns a public status entry, the private atlas row.
 - Search Console: a Domain property for the new registrable domain and the sitemap `…/sitemap-index.xml`.
 - A real social unfurl check; the image is a capture of a local clearing.
 - Identity approval: the mark and wordmark in `brand/` are Tala's working drafts.
-- Legal review: the Privacy and Terms copy is truthful to the data flows and has had no qualified review. Whether
+- Legal review: the Privacy and Terms copy is truthful to the data flows and has had no qualified review. Wolf
+  accepted the cookie position on 2026-11-20 (see `docs/DECISIONS.md`). Whether
   the page counts as a hosting service that needs a formal notice-and-action form under the Digital Services Act is
   unresolved; the page offers a contact route and operator removal.
 - The Works sponsor component is not placed on this page: the page is one canvas with small links by Wolf's brief.

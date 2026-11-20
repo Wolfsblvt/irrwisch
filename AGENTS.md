@@ -48,8 +48,8 @@ main:
   required pre-integration evidence: none
   required approval/review: none
   resolved conversations: no
-  automatic CI: .github/workflows/product-website.yml — provisional, not yet activated; it needs the
-    repository secrets and variables named in docs/DEPLOYMENT.md
-  automatic retained branch effects: Worker deployment from accepted main once the workflow is activated
+  automatic CI: .github/workflows/product-website.yml — runs `npm test` on every push and pull request that
+    touches website/; publishing from it is off until the variables and secrets in docs/DEPLOYMENT.md exist
+  automatic retained branch effects: none today; Worker deployment from accepted main once publishing is on
   other pre-update evidence: none
 ```

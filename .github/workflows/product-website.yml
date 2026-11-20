@@ -1,6 +1,7 @@
-# Publishes accepted main to the irrwisch Worker. Adopted from the Wolf Ops product-website creation asset.
-# Not active until the repository carries CLOUDFLARE_API_TOKEN, WOLFSBLVT_LEGAL_OPERATOR_B64,
-# CLOUDFLARE_ACCOUNT_ID and WEBSITE_TARGET=workers (see docs/DEPLOYMENT.md).
+# Checks every change under website/, and publishes accepted main to the irrwisch Worker once publishing is
+# switched on. Adopted from the Wolf Ops product-website creation asset.
+# Publishing is off until the repository variable WEBSITE_TARGET is `workers`; from then on a missing
+# CLOUDFLARE_API_TOKEN, WOLFSBLVT_LEGAL_OPERATOR_B64 or CLOUDFLARE_ACCOUNT_ID fails the run (see docs/DEPLOYMENT.md).
 name: Product website
 on:
   push:
@@ -60,7 +61,7 @@ jobs:
         working-directory: ${{ env.SITE_ROOT }}
         run: npm test
       - name: Publish accepted main
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.WEBSITE_TARGET == 'workers'
         working-directory: ${{ env.SITE_ROOT }}
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}

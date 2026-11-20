@@ -319,8 +319,11 @@ provider, the IPv4/IPv6 switch, a cleared cookie at home, a private window and a
 **The price.** The page now stores a cookie. The position taken is that it is strictly necessary for the service
 the visitor asks for (§ 25(2) no. 2 TDDDG): counting each person once and limiting each to one allowance is what the
 place is, the token is used for nothing else and shared with nobody. That position has had no qualified legal
-review, and German authorities read "strictly necessary" narrowly, so it is a known risk Wolf carries. There is no
-consent banner.
+review, and German authorities read "strictly necessary" narrowly. There is no consent banner.
+
+**Accepted by the owner.** Wolf, 2026-11-20, after reading the above including the risk: "That is good and okay
+by me, you can record the cookie policy as such." The cookie policy is therefore settled: one strictly necessary
+first-party cookie, no banner, no other device storage, no analytics.
 
 **Known misses, accepted.** People who share one address and arrive without a cookie they already used elsewhere
 are one person (a household, an office). Somebody who clears cookies and changes network at the same time, or
