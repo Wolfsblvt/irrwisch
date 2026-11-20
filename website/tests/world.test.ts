@@ -182,3 +182,13 @@ test('an address is remembered by its household part only', async () => {
   assert.equal(addressBucket('2001:db8::1'), '2001:db8:0:0::/64');
   assert.notEqual(addressBucket('2001:db8:aa:2::1'), addressBucket('2001:db8:aa:1::1'));
 });
+
+test('the visitor token is read from the cookie header and nothing else passes for one', async () => {
+  const { tokenCookie, visitorToken } = await import('../src/shared/guest.ts');
+  const token = '0123456789abcdef0123456789abcdef';
+  assert.equal(visitorToken(`theme=dark; wisp=${token}; other=1`), token);
+  assert.equal(visitorToken('wisp=short'), null);
+  assert.equal(visitorToken(`wisp=${token.toUpperCase()}`), null);
+  assert.equal(visitorToken(null), null);
+  assert.match(tokenCookie(token), /^wisp=0123456789abcdef0123456789abcdef; Max-Age=34560000; Path=\/; Secure; HttpOnly; SameSite=Lax$/u);
+});

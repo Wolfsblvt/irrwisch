@@ -1,8 +1,10 @@
 /**
  * Worker entry: static assets serve the page; `/api/*` reaches the clearing.
  * The rate-limit binding counts connection attempts per network address in
- * Cloudflare's memory only; nothing about the address is stored anywhere.
+ * Cloudflare's memory only. `/api/me` hands the browser its visitor token,
+ * the one cookie this page sets; the clearing keeps only a hash of it.
  */
+import { tokenCookie, visitorToken } from '../src/shared/guest.ts';
 import { Clearing } from './clearing.ts';
 
 export { Clearing };
@@ -28,6 +30,14 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/api/health') {
       return Response.json({ ok: true, at: new Date().toISOString() }, { headers: { 'cache-control': 'no-store' } });
+    }
+    if (url.pathname === '/api/me') {
+      // Stores the visitor token, or renews its lifetime. The page calls this
+      // once before it walks in, so the socket that follows carries the cookie.
+      if (request.method !== 'POST') return new Response('Method not allowed.', { status: 405 });
+      const token = visitorToken(request.headers.get('cookie'))
+        ?? [...crypto.getRandomValues(new Uint8Array(16))].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+      return new Response(null, { status: 204, headers: { 'set-cookie': tokenCookie(token), 'cache-control': 'no-store' } });
     }
     if (url.pathname === '/api/world') {
       if (request.method !== 'GET') return new Response('Method not allowed.', { status: 405 });

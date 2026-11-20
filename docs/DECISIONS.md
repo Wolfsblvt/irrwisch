@@ -79,7 +79,7 @@ SQLite database, neither of which is close.
 
 ## The visitor's device stores nothing
 
-**Date:** 2026-11-06 · **Status:** Current for the device, narrowed on 2026-11-20
+**Date:** 2026-11-06 · **Status:** Superseded on 2026-11-20 by "Every person is counted once"
 
 No cookies, no localStorage, no sessionStorage, no IndexedDB. The device half of this decision stands. The server
 half ("identity exists only for one connection, budgets are per connection") was replaced on 2026-11-20 by "One
@@ -247,7 +247,7 @@ the page's own promise false.
 
 ## One allowance per address per night
 
-**Date:** 2026-11-20 · **Status:** Current, replaces per-connection budgets
+**Date:** 2026-11-20 · **Status:** Superseded the same day by "Every person is counted once"
 
 The clearing remembers a visitor for twelve hours by a salted SHA-256 of the connecting address (the whole IPv4
 address, the /64 prefix for IPv6), kept in the Durable Object with the remaining allowance and the dealt hand.
@@ -293,3 +293,42 @@ A full reset of the world (it would have destroyed what real visitors had alread
 
 **Reopen if.** Automated clients that are not people start arriving in numbers; then arrival may need a human
 signal before it counts.
+
+## Every person is counted once
+
+**Date:** 2026-11-20 · **Status:** Current, supersedes "The visitor's device stores nothing" and "One allowance per
+address per night"
+
+"N have walked here" counts people, and each person once, ever. A person walks in once per night (walker, worn
+ground, a lit window) and gets one allowance per night; only the first walk of their life raises the count.
+
+Two things recognise a person. A first-party cookie `wisp` holds a random token (HttpOnly, Secure, SameSite=Lax,
+400 days, renewed on every visit), set by `POST /api/me` before the socket opens. The connecting address (whole
+IPv4, /64 of IPv6) is the fallback. The object keeps salted hashes of both in `marks`, pointing at a row in
+`people`. A known token decides. An unknown token arriving from a known address is the person behind that address,
+and from then on the token points at them too. An address that already points at somebody else is left alone.
+
+**Why.** Wolf, 2026-11-20: "Every freaking person visiting this site should be ONE person visiting this site, no
+questions asked. Ever. Even over multiple days. If they use a VPN or mask their connection? I don't care. Normal
+user usage of their PC over the course of days or weeks? We should never, ever miss it. This was the whole idea of
+the website, and one of its core principles." An address alone cannot do that: home connections change address,
+and one browser alternates between IPv4 and IPv6. Only something on the device follows a person across networks,
+and only the address catches them after the cookie is gone. Together they cover a reload, a new address from the
+provider, the IPv4/IPv6 switch, a cleared cookie at home, a private window and a second browser on the same line.
+
+**The price.** The page now stores a cookie. The position taken is that it is strictly necessary for the service
+the visitor asks for (§ 25(2) no. 2 TDDDG): counting each person once and limiting each to one allowance is what the
+place is, the token is used for nothing else and shared with nobody. That position has had no qualified legal
+review, and German authorities read "strictly necessary" narrowly, so it is a known risk Wolf carries. There is no
+consent banner.
+
+**Known misses, accepted.** People who share one address and arrive without a cookie they already used elsewhere
+are one person (a household, an office). Somebody who clears cookies and changes network at the same time, or
+masks their connection, is a new person. A person with cookies blocked who stays away longer than 30 days is new.
+
+**Rejected.** Address only (fails across days). Cookie only (a private window or a cleared cookie would be a new
+person at home). Browser fingerprinting (unreliable, and worse for the visitor). localStorage (script-readable and
+cut to seven days by Safari; a server-set cookie is not).
+
+**Reopen if.** Legal review rejects the strictly-necessary position, or shared addresses merge strangers often
+enough to make the count visibly too low.

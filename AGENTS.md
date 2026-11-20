@@ -12,7 +12,8 @@ supplements the shared Leitsatz doctrine and grants no Work or authority.
   Durable Object. `brand/` holds the identity masters and exports. `docs/` holds durable truth.
 - The shared world rules live in `website/src/shared/` and run on both the Worker and the client. Change them in one
   place and keep `website/tests/` green.
-- The visitor's device stores nothing (see `docs/DECISIONS.md`). Do not add cookies, storage or analytics.
+- Every person is counted once, ever (see `docs/DECISIONS.md`). The `wisp` cookie exists for that alone. Do not add
+  other cookies, browser storage or analytics, and never use the token for anything else.
 - `website/src/data/legal-operator.example.json` is an obvious fixture. The real operator record is projected only
   into production builds through `WOLFSBLVT_LEGAL_OPERATOR_B64`; never commit or print it.
 - The only deletions are the operator routes behind `ADMIN_TOKEN` (wipe a slate, remove a thing). Never add a

@@ -25,12 +25,12 @@ invariants; the one idea that organises it is that the world has exactly one wri
    (counted in Cloudflare memory for one minute, never stored) and forwards the upgrade to the `Clearing` object named
    `main`.
 3. A connection opened with `?watch=1` is a watcher: it gets `hello` and every delta, and nothing else in this step
-   or the next applies to it. Otherwise the object hashes the connecting address with its own salt and looks the
-   hash up in `guests`. A known guest
-   (same address within twelve hours) gets the allowance and hand it had left and causes no arrival. For a new one
-   the object accepts the socket with the hibernation API, deals a hand of three things, sends `hello` with a fresh
+   or the next applies to it. Otherwise the object recognises the person: by the salted hash of the `wisp` cookie token
+   (which the page fetched from `POST /api/me` just before), or failing that by the salted hash of the connecting
+   address. Somebody who already walked in tonight gets the allowance and hand they had left and causes no arrival.
+   For anybody else the object accepts the socket with the hibernation API, deals a hand of three things, sends `hello` with a fresh
    snapshot and the connection's budgets, then performs the arrival: picks a quiet room, finds a path from the entry
-   cell to its doorstep, increments wear on every cell of the path, lights the window, increments the visit count.
+   cell to its doorstep, increments wear on every cell of the path, lights the window, and raises the count if this person has never walked in before.
    Those four deltas go to every open socket, so other watchers see the figure walk in.
 4. A visitor action (`build`, `place`, `chalk`, `nudge`, `wave`) arrives as a message. The object checks the
    connection's remaining budget, runs the shared rule, writes the change, replies `ack` or `nope` to the sender,
@@ -43,12 +43,13 @@ invariants; the one idea that organises it is that the world has exactly one wri
 
 ## Data and storage
 
-The object's SQLite database holds six tables: `meta` (version, counters, visit total, growth, last activity,
+The object's SQLite database holds seven tables: `meta` (version, counters, visit total, growth, last activity,
 current omen), `rooms` (position, stack level, hue, roof, last lit time, light count, the 64-cell slate as a digit string),
-`things` (kind, position, placed time), `creatures` (position, facing, last move) `tiles` (wear per ground cell) and `guests` (salted hash of the address bucket, first arrival time, remaining
-allowance, dealt hand). `guests` is the only table that is about a person and the only one that forgets: rows are
-deleted twelve hours after the first arrival, on the next arrival or alarm. Nothing links a guest row to a room, a
-thing or a chalk cell.
+`things` (kind, position, placed time), `creatures` (position, facing, last move) `tiles` (wear per ground cell), `people` (first seen, when tonight began, remaining allowance, dealt hand) and
+`marks` (a salted hash of a cookie token or of an address bucket, the person it points at, when it was last seen).
+`people` and `marks` are the only tables about a person and the only ones that forget: a token mark 400 days after
+its last visit, an address mark after 30 days, a person once no mark points at them. Nothing links a person to a
+room, a thing or a chalk cell. `visits` in `meta` counts people: it rises only when a new person is created.
 Growth of saplings and the glow of windows are not stored; both derive from age at render time.
 
 Cloudflare keeps point-in-time recovery for SQLite-backed objects for thirty days. The snapshot route is also the

@@ -38,7 +38,7 @@ export interface Omen {
 
 /** Server → client. */
 export type ServerMessage =
-  | { t: 'hello'; world: Snapshot; budgets: Budgets; hand: ThingKind[]; presence: number; omen: Omen | null; you: number; returning: boolean }
+  | { t: 'hello'; world: Snapshot; budgets: Budgets; hand: ThingKind[]; presence: number; omen: Omen | null; you: number; returning: boolean; known: boolean }
   | { t: 'delta'; ops: Delta[] }
   | { t: 'ack'; of: ClientMessage['t']; budgets: Budgets; note?: string }
   | { t: 'nope'; of: ClientMessage['t']; reason: string; budgets: Budgets };

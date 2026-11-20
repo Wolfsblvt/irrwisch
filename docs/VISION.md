@@ -92,7 +92,8 @@ everyone. The settlement and the clearing grow together.
   Coming back a week later should feel like returning to a place, not reloading a page.
 - **Quiet.** No sound by default, no onboarding modal, no streaks, no leaderboards, no share buttons. The whisper
   line at the bottom speaks in short sentences. The footer links are small.
-- **Honest and private.** No cookies, no browser storage, no analytics, no third-party fonts or scripts. Everything a
+- **Honest and private.** "N have walked here" counts people, each one once, ever; one first-party cookie exists
+  for exactly that and for nothing else. No analytics, no third-party fonts or scripts. Everything a
   visitor leaves is anonymous and public by design. The privacy page says exactly that.
 - **Accessible.** Every verb has a keyboard route: build and place can let the clearing choose a spot, chalk is a
   real grid of buttons, nudge takes the nearest creature. Reduced motion removes drift and walking and keeps the

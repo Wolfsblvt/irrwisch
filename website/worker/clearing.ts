@@ -36,12 +36,12 @@ import {
   seedSnapshot,
   shouldGrow,
 } from '../src/shared/world.ts';
-import { NIGHT_MS, addressBucket } from '../src/shared/guest.ts';
+import { ADDRESS_MEMORY_MS, NIGHT_MS, TOKEN_MEMORY_MS, addressBucket, visitorToken } from '../src/shared/guest.ts';
 import { type ClientMessage, type Delta, type Omen, type ServerMessage, isClientMessage } from '../src/shared/protocol.ts';
 
 interface Session {
   id: number;
-  /** Salted hash of the address bucket; the allowance lives in the `guests` row under it. */
+  /** The person's id in `people`, as text; empty for a watcher. The allowance lives in that row. */
   guest: string;
   budgets: Budgets;
   hand: ThingKind[];
@@ -130,39 +130,38 @@ export class Clearing extends DurableObject {
   }
 
   private async openSession(request: Request, watching: boolean): Promise<Response> {
+    const now = Date.now();
     // A watcher sees the place live and leaves nothing: no visit, no walker,
-    // no light, no allowance, no guest row. Checks against the live Home use
+    // no light, no allowance, no trace. Checks against the live Home use
     // this, so that looking after the place never counts as walking in.
-    const guest = watching ? '' : await this.guestKey(request);
+    const who = watching ? null : await this.recognise(request, now);
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
-    const now = Date.now();
     const id = this.nextId('session');
     const random = createRandom(hashInts(id, now & 0xffff, 9));
 
-    // One allowance and one counted visit per address per night. A reload,
-    // a second tab or a reconnect picks up where the first arrival left off.
-    this.sql.exec('DELETE FROM guests WHERE since <= ?', now - NIGHT_MS);
-    const known = watching ? { budgets: { build: 0, place: 0, chalk: 0, nudge: 0 }, hand: [] } : this.guestBudgets(guest);
+    // A person is counted once, ever. Each night they walk in once and get
+    // one allowance; a reload, a second tab or a reconnect picks that up.
+    const tonight = who ? this.guestBudgets(who.guest) : { budgets: { build: 0, place: 0, chalk: 0, nudge: 0 }, hand: [] };
     const session: Session = {
       id,
-      guest,
-      budgets: known?.budgets ?? { ...FRESH_BUDGETS },
-      hand: known?.hand ?? dealHand(random),
+      guest: who?.guest ?? '',
+      budgets: tonight?.budgets ?? { ...FRESH_BUDGETS },
+      hand: tonight?.hand ?? dealHand(random),
       lastActionAt: 0,
       lastWaveAt: 0,
     };
-    if (!known) {
+    if (who && !tonight) {
       this.sql.exec(
-        'INSERT INTO guests (key, since, build, place, chalk, nudge, hand) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        guest, now, session.budgets.build, session.budgets.place, session.budgets.chalk, session.budgets.nudge, session.hand.join(','),
+        'UPDATE people SET night_since = ?, build = ?, place = ?, chalk = ?, nudge = ?, hand = ? WHERE id = ?',
+        now, session.budgets.build, session.budgets.place, session.budgets.chalk, session.budgets.nudge, session.hand.join(','), Number(who.guest),
       );
     }
     this.ctx.acceptWebSocket(server);
     server.serializeAttachment(session);
     this.sessions.set(server, session);
 
-    const arrival = known ? [] : this.arrive(now, random);
+    const arrival = who && !tonight ? this.arrive(now, random, who.fresh) : [];
     const hello: ServerMessage = {
       t: 'hello',
       world: this.snapshot(),
@@ -171,7 +170,8 @@ export class Clearing extends DurableObject {
       presence: this.ctx.getWebSockets().length,
       omen: this.currentOmen(now),
       you: id,
-      returning: known !== null,
+      returning: tonight !== null,
+      known: who !== null && !who.fresh,
     };
     server.send(JSON.stringify(hello));
     this.broadcast([...arrival, { k: 'presence', count: this.ctx.getWebSockets().length }]);
@@ -215,8 +215,8 @@ export class Clearing extends DurableObject {
     const result = this.handle(message, session, now);
     if (result.ok && session.guest) {
       this.sql.exec(
-        'UPDATE guests SET build = ?, place = ?, chalk = ?, nudge = ? WHERE key = ?',
-        session.budgets.build, session.budgets.place, session.budgets.chalk, session.budgets.nudge, session.guest,
+        'UPDATE people SET build = ?, place = ?, chalk = ?, nudge = ? WHERE id = ?',
+        session.budgets.build, session.budgets.place, session.budgets.chalk, session.budgets.nudge, Number(session.guest),
       );
     }
     socket.serializeAttachment(session);
@@ -242,7 +242,7 @@ export class Clearing extends DurableObject {
 
   async alarm(): Promise<void> {
     const now = Date.now();
-    this.sql.exec('DELETE FROM guests WHERE since <= ?', now - NIGHT_MS);
+    this.forget(now);
     const world = this.world();
     const deltas: Delta[] = [];
     const random = createRandom(hashInts(now & 0xffffff, 3, 17));
@@ -294,30 +294,79 @@ export class Clearing extends DurableObject {
       if (visits >= 16) this.setMeta('visits', String(visits - 9));
       this.setMeta('fix_20261120_check_visits', '1');
     }
+    // 2026-11-20: guests were remembered by address for one night. Everyone
+    // already counted becomes a person recognised by that same address hash,
+    // so nobody who walked in on the first day is counted a second time.
+    const guests = this.sql.exec<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'guests'").toArray();
+    if (guests.length > 0) {
+      const rows = this.sql.exec<GuestRow>('SELECT key, since, build, place, chalk, nudge, hand FROM guests').toArray();
+      for (const row of rows) {
+        const person = this.nextId('person');
+        this.sql.exec(
+          'INSERT INTO people (id, first_seen, night_since, build, place, chalk, nudge, hand) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          person, row.since, row.since, row.build, row.place, row.chalk, row.nudge, row.hand,
+        );
+        this.sql.exec('INSERT OR IGNORE INTO marks (key, person, seen) VALUES (?, ?, ?)', `a${row.key}`, person, row.since);
+      }
+      this.sql.exec('DROP TABLE guests');
+    }
   }
 
-  // ----- Guests ------------------------------------------------------------
+  // ----- People ------------------------------------------------------------
 
   /**
-   * The key one address is remembered under for a night: a salted SHA-256 of
-   * its bucket. The address itself is never stored.
+   * Finds the person behind a connection, or makes a new one. The cookie
+   * token decides when it is known; otherwise the address does, so that a
+   * cleared cookie, a private window or a second browser at home is still
+   * the same person. Only salted hashes are kept, never token or address.
    */
-  private async guestKey(request: Request): Promise<string> {
+  private async recognise(request: Request, now: number): Promise<{ guest: string; fresh: boolean }> {
+    this.forget(now);
     let salt = this.meta('guest_salt');
     if (!salt) {
       salt = [...crypto.getRandomValues(new Uint8Array(16))].map((byte) => byte.toString(16).padStart(2, '0')).join('');
       this.setMeta('guest_salt', salt);
     }
-    const bucket = addressBucket(request.headers.get('cf-connecting-ip') ?? 'unknown');
-    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${salt}|${bucket}`));
-    return [...new Uint8Array(digest)].slice(0, 16).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+    const token = visitorToken(request.headers.get('cookie'));
+    const tokenKey = token ? `c${await hashKey(salt, token)}` : null;
+    const addressKey = `a${await hashKey(salt, addressBucket(request.headers.get('cf-connecting-ip') ?? 'unknown'))}`;
+    const byToken = tokenKey ? this.personBehind(tokenKey) : null;
+    const byAddress = this.personBehind(addressKey);
+
+    let person = byToken ?? byAddress;
+    const fresh = person === null;
+    if (person === null) {
+      person = this.nextId('person');
+      this.sql.exec(
+        "INSERT INTO people (id, first_seen, night_since, build, place, chalk, nudge, hand) VALUES (?, ?, 0, 0, 0, 0, 0, '')",
+        person, now,
+      );
+    }
+    const remember = 'INSERT INTO marks (key, person, seen) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET person = excluded.person, seen = excluded.seen';
+    if (tokenKey) this.sql.exec(remember, tokenKey, person, now);
+    // An address that already points at somebody else keeps doing so: two
+    // people with their own cookies behind one router stay two people.
+    if (byAddress === null || byAddress === person) this.sql.exec(remember, addressKey, person, now);
+    return { guest: String(person), fresh };
   }
 
+  private personBehind(key: string): number | null {
+    const row = this.sql.exec<{ person: number }>('SELECT person FROM marks WHERE key = ?', key).toArray()[0];
+    return row ? row.person : null;
+  }
+
+  /** Drops what is too old to recognise anyone by, and people nothing points at any more. */
+  private forget(now: number): void {
+    this.sql.exec("DELETE FROM marks WHERE (key LIKE 'a%' AND seen <= ?) OR (key LIKE 'c%' AND seen <= ?)", now - ADDRESS_MEMORY_MS, now - TOKEN_MEMORY_MS);
+    this.sql.exec('DELETE FROM people WHERE id NOT IN (SELECT person FROM marks)');
+  }
+
+  /** Tonight's remaining allowance and hand, or null when this person has not walked in tonight. */
   private guestBudgets(guest: string): { budgets: Budgets; hand: ThingKind[] } | null {
     const row = this.sql
-      .exec<GuestRow>('SELECT since, build, place, chalk, nudge, hand FROM guests WHERE key = ?', guest)
+      .exec<PersonRow>('SELECT night_since, build, place, chalk, nudge, hand FROM people WHERE id = ?', Number(guest))
       .toArray()[0];
-    if (!row || row.since <= Date.now() - NIGHT_MS) return null;
+    if (!row || row.night_since <= Date.now() - NIGHT_MS) return null;
     return {
       budgets: { build: row.build, place: row.place, chalk: row.chalk, nudge: row.nudge },
       hand: row.hand.split(',').filter((kind): kind is ThingKind => THING_KINDS.includes(kind as ThingKind)),
@@ -467,7 +516,7 @@ export class Clearing extends DurableObject {
   }
 
   /** Every connection is an arrival: a walker, worn ground, a lit window. */
-  private arrive(now: number, random: () => number): Delta[] {
+  private arrive(now: number, random: () => number, counted: boolean): Delta[] {
     const world = this.world();
     const rooms = [...world.rooms.values()];
     if (rooms.length === 0) return [];
@@ -488,14 +537,19 @@ export class Clearing extends DurableObject {
     }
     const lights = room.lights + 1;
     this.sql.exec('UPDATE rooms SET lit_at = ?, lights = ? WHERE id = ?', now, lights, room.id);
-    const visits = Number(this.meta('visits') ?? 0) + 1;
-    this.setMeta('visits', String(visits));
-    return [
+    const deltas: Delta[] = [
       { k: 'walker', path, room: room.id },
       { k: 'wear', tiles: worn },
       { k: 'light', room: room.id, litAt: now, lights },
-      { k: 'visits', visits },
     ];
+    // Somebody who has been here before walks in again and lights a window,
+    // but "have walked here" counts people, and each person only once.
+    if (counted) {
+      const visits = Number(this.meta('visits') ?? 0) + 1;
+      this.setMeta('visits', String(visits));
+      deltas.push({ k: 'visits', visits });
+    }
+    return deltas;
   }
 
   private maybeSpawnCreature(world: World, now: number, random: () => number): Delta | null {
@@ -571,10 +625,11 @@ export class Clearing extends DurableObject {
         id INTEGER PRIMARY KEY, x INTEGER NOT NULL, y INTEGER NOT NULL, facing INTEGER NOT NULL, moved_at INTEGER NOT NULL
       );
       CREATE TABLE IF NOT EXISTS tiles (x INTEGER NOT NULL, y INTEGER NOT NULL, wear INTEGER NOT NULL, PRIMARY KEY (x, y));
-      CREATE TABLE IF NOT EXISTS guests (
-        key TEXT PRIMARY KEY, since INTEGER NOT NULL, build INTEGER NOT NULL, place INTEGER NOT NULL,
-        chalk INTEGER NOT NULL, nudge INTEGER NOT NULL, hand TEXT NOT NULL
+      CREATE TABLE IF NOT EXISTS people (
+        id INTEGER PRIMARY KEY, first_seen INTEGER NOT NULL, night_since INTEGER NOT NULL, build INTEGER NOT NULL,
+        place INTEGER NOT NULL, chalk INTEGER NOT NULL, nudge INTEGER NOT NULL, hand TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS marks (key TEXT PRIMARY KEY, person INTEGER NOT NULL, seen INTEGER NOT NULL);
     `);
     if (this.meta('version') === null) this.seed(Date.now());
     this.applyCorrections();
@@ -638,7 +693,7 @@ export class Clearing extends DurableObject {
     this.sql.exec('INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', name, value);
   }
 
-  private nextId(kind: 'room' | 'thing' | 'creature' | 'session'): number {
+  private nextId(kind: 'room' | 'thing' | 'creature' | 'session' | 'person'): number {
     const next = Number(this.meta(`id_${kind}`) ?? 0) + 1;
     this.setMeta(`id_${kind}`, String(next));
     return next;
@@ -685,7 +740,9 @@ type RoomRow = {
   lights: number;
   sign: string;
 };
-type GuestRow = { since: number; build: number; place: number; chalk: number; nudge: number; hand: string };
+type GuestRow = { key: string; since: number; build: number; place: number; chalk: number; nudge: number; hand: string };
+
+type PersonRow = { night_since: number; build: number; place: number; chalk: number; nudge: number; hand: string };
 
 type ThingRow = {
   id: number;
@@ -701,6 +758,12 @@ type CreatureRow = {
   facing: number;
   moved_at: number;
 };
+
+/** Salted SHA-256, cut to 128 bits: enough to tell people apart, useless for finding out who they are. */
+async function hashKey(salt: string, value: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${salt}|${value}`));
+  return [...new Uint8Array(digest)].slice(0, 16).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
 
 function roomFromRow(row: RoomRow): Room {
   return {

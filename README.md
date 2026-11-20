@@ -7,7 +7,7 @@
 
 [![Stack: Astro + Workers](https://img.shields.io/badge/stack-Astro%20%2B%20Cloudflare%20Workers-ff8a3d)](docs/ARCHITECTURE.md)
 [![World: one Durable Object](https://img.shields.io/badge/world-one%20Durable%20Object-6d5bd0)](docs/ARCHITECTURE.md#data-and-storage)
-[![Device storage: none](https://img.shields.io/badge/device%20storage-none-39756a)](docs/DECISIONS.md#the-visitors-device-stores-nothing)
+[![Every person counts once](https://img.shields.io/badge/every%20person-counts%20once-39756a)](docs/DECISIONS.md#every-person-is-counted-once)
 [![Home: irrwisch.com](https://img.shields.io/badge/home-irrwisch.com-ff8a3d)](https://irrwisch.com/)
 
 **A small clearing in the woods that exists only because people came by.**
@@ -19,7 +19,7 @@ the ground, chalk a few pixels onto a slate, or shoo one of the little ones a st
 The place is what everyone who was ever there has made of it, together, and it keeps changing a little while nobody
 is watching.
 
-It is one page, drawn live on a canvas, with no account, no name and nothing stored on your device. Walking in takes
+It is one page, drawn live on a canvas, with no account and no name; one small cookie makes sure every person counts once. Walking in takes
 ten seconds; staying a minute or two is the idea.
 
 **[Walk in: irrwisch.com](https://irrwisch.com/)** · [Run it locally](#run-it-yourself) · [How it is built](docs/ARCHITECTURE.md) · [Where it is going](docs/VISION.md)
@@ -57,8 +57,9 @@ is [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## Trust, privacy and compatibility
 
-The page sets no cookies and uses no browser storage. Everything a visitor leaves is anonymous, public and permanent
-by design; nothing links it back to a person. Cloudflare receives the ordinary request data to serve the page and
+The page sets one cookie, a random token that lets the clearing recognise a returning person so that everybody is
+counted once and gets one allowance per night. There is no analytics and no other browser storage. Everything a
+visitor leaves is anonymous, public and permanent by design; nothing links it back to a person. Cloudflare receives the ordinary request data to serve the page and
 holds a per-address rate-limit counter in memory for a minute. The pages at `/privacy/`, `/terms/` and `/impressum/`
 say exactly this, and the Terms say how to report something that should not be there. The clearing needs a browser with Canvas 2D and WebSockets; it honours the reduced-motion preference by
 removing drift and walking while keeping the place legible.

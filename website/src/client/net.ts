@@ -30,6 +30,22 @@ export function connect(handlers: ConnectionHandlers): Connection {
   if (new URLSearchParams(window.location.search).get('watch') === '1') url.searchParams.set('watch', '1');
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
 
+  const watching = url.searchParams.has('watch');
+
+  /**
+   * Makes sure the browser holds its visitor token before the socket opens,
+   * so that the same person is recognised, and counted once, however often
+   * and from whatever network they come back. A watcher needs none.
+   */
+  async function introduce(): Promise<void> {
+    if (watching) return;
+    try {
+      await fetch('/api/me', { method: 'POST', credentials: 'same-origin' });
+    } catch {
+      // Without the token the clearing still recognises the address.
+    }
+  }
+
   function open(): void {
     socket = new WebSocket(url);
     socket.addEventListener('open', () => {
@@ -68,7 +84,9 @@ export function connect(handlers: ConnectionHandlers): Connection {
     });
   }
 
-  open();
+  void introduce().then(() => {
+    if (!closedByUs) open();
+  });
 
   return {
     send(message: ClientMessage): boolean {

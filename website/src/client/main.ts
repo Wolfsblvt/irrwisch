@@ -83,6 +83,9 @@ async function boot(): Promise<void> {
     return sent;
   }
 
+  /** True when the clearing has seen this person on an earlier night. */
+  let knownHere = false;
+
   view.subscribe((event) => {
     switch (event.kind) {
       case 'visits':
@@ -90,7 +93,7 @@ async function boot(): Promise<void> {
         ui.setCount(view.visits, view.presence);
         return;
       case 'arrival':
-        if (event.mine) ui.whisper('you walked in. a window lit for you.', 7000);
+        if (event.mine) ui.whisper(knownHere ? 'you are back. a window lit for you again.' : 'you walked in. a window lit for you.', 7000);
         else ui.whisper('someone just arrived.');
         return;
       case 'room':
@@ -142,6 +145,7 @@ async function boot(): Promise<void> {
           view.omen = message.omen;
           // A reload within the same night is not a new arrival: no walker comes for it.
           view.expectingArrival = !message.returning;
+          knownHere = message.known;
           if (new URLSearchParams(window.location.search).get('watch') === '1') ui.whisper('you are only watching. nothing is counted.', 7000);
           else if (message.returning) ui.whisper('welcome back. the night remembers you.', 7000);
           ui.setBudgets(message.budgets);
