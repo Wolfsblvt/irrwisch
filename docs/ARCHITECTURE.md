@@ -24,7 +24,9 @@ invariants; the one idea that organises it is that the world has exactly one wri
 2. The client opens `wss://…/api/ws`. The Worker checks the rate-limit binding with the connecting address as key
    (counted in Cloudflare memory for one minute, never stored) and forwards the upgrade to the `Clearing` object named
    `main`.
-3. The object hashes the connecting address with its own salt and looks the hash up in `guests`. A known guest
+3. A connection opened with `?watch=1` is a watcher: it gets `hello` and every delta, and nothing else in this step
+   or the next applies to it. Otherwise the object hashes the connecting address with its own salt and looks the
+   hash up in `guests`. A known guest
    (same address within twelve hours) gets the allowance and hand it had left and causes no arrival. For a new one
    the object accepts the socket with the hibernation API, deals a hand of three things, sends `hello` with a fresh
    snapshot and the connection's budgets, then performs the arrival: picks a quiet room, finds a path from the entry

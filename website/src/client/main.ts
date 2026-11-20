@@ -142,7 +142,8 @@ async function boot(): Promise<void> {
           view.omen = message.omen;
           // A reload within the same night is not a new arrival: no walker comes for it.
           view.expectingArrival = !message.returning;
-          if (message.returning) ui.whisper('welcome back. the night remembers you.', 7000);
+          if (new URLSearchParams(window.location.search).get('watch') === '1') ui.whisper('you are only watching. nothing is counted.', 7000);
+          else if (message.returning) ui.whisper('welcome back. the night remembers you.', 7000);
           ui.setBudgets(message.budgets);
           ui.setHand(message.hand);
           ui.setCount(view.visits, view.presence);

@@ -20,6 +20,8 @@ supplements the shared Leitsatz doctrine and grants no Work or authority.
 - Publication is Cloudflare only, live at `https://irrwisch.com/`. Both routes are in `docs/DEPLOYMENT.md`; keep
   routes and domains out of `wrangler.jsonc`. Later uploads must keep the `ADMIN_TOKEN` secret binding.
 - Cloudflare Web Analytics and Email Address Obfuscation stay off on the zone: the Privacy page depends on it.
+- Never check the live Home as a visitor. Use `https://irrwisch.com/?watch=1`, `/api/world` and the static routes;
+  a plain page load on production is a counted visit that leaves a light and worn ground. Test arrivals locally.
 - Leitsatz adopted through `deploy-leitsatz-skill-mcp-v0.8.92` (source `2962234f`), last checked 2026-11-16.
 
 ## Commands

@@ -271,3 +271,25 @@ guest, which is accepted: it costs effort per allowance and the arrival rate lim
 
 **Reopen if.** Shared addresses visibly lock out real visitors, or abuse through address hopping shows up on the
 slates.
+
+## Checks watch, they do not walk in
+
+**Date:** 2026-11-20 · **Status:** Current
+
+`/?watch=1` shows the live place to someone who is looking after it and leaves nothing: no counted visit, no walker,
+no light, no worn ground, no allowance, not even a wave. Every check against the live Home uses it. The count
+"have walked here" means people, one per address per night, and nothing else.
+
+**Why.** On the first day the count stood at 16 and nine of those were the building session's own browser checks,
+which it then blamed on Wolf's reloads. Wolf: "So that counter is still lying." A number that the page shows to
+every visitor has to be true, and the only way to keep operations out of it is a way to look without arriving.
+
+**The correction.** The third cut subtracted exactly those nine visits once (18 to 9), recorded in the object's
+`meta` so it cannot run twice. The nine walks also wore ground and lit windows; those could not be separated from
+real walks and were left.
+
+**Rejected.** Recognising checks by address or user agent (fragile, and a rule nobody can verify from outside).
+A full reset of the world (it would have destroyed what real visitors had already left).
+
+**Reopen if.** Automated clients that are not people start arriving in numbers; then arrival may need a human
+signal before it counts.

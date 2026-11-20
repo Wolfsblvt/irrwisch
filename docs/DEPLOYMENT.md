@@ -17,7 +17,8 @@ building session, through Wolf's authenticated Cloudflare connection and on his 
 | Zone | `irrwisch.com`, id `775b4007819670ec649ff5ea2ec818df`, Free plan, registered at Cloudflare Registrar |
 | Worker | `irrwisch`; `workers.dev` and preview URLs off |
 | First cut | 2026-11-19: deployment `09126bcb-aaf1-4b96-88f0-ebe2dd295800`, version `455afbeb-079d-425a-9ac7-6f7d00c7fdc1`, built from commit `26e846c` |
-| Current cut | 2026-11-20: deployment `7c618c62-0104-4885-800e-63514aab5b60`, version `1e310f96-d151-459f-83b5-fa02cc33adc6`: one allowance and one counted visit per address per night |
+| Second cut | 2026-11-20: deployment `7c618c62-0104-4885-800e-63514aab5b60`, version `1e310f96-d151-459f-83b5-fa02cc33adc6`: one allowance and one counted visit per address per night |
+| Current cut | 2026-11-20: deployment `48fb887a-2324-4ac4-abda-0e0d05c6b848`, version `805c5236-9680-41f3-8e66-771a2ddd6eb0`: watch-only mode, and the visit count corrected from 18 to 9 |
 | Custom domain | `irrwisch.com` attached to the Worker, id `17cba2736ee048e63cd81250a38bce1dff117872` |
 | `www` | proxied `AAAA 100::` record `641e56d76d52a474e34532b672034f7d`; redirect ruleset `a6eb161fd2b74b289ddc5cecb8d09973`, rule `05fe78460532494893e9422768897732`: 301 to the apex, path and query kept |
 | Durable Object | class `Clearing`, binding `CLEARING`, instance `main`, SQLite backend, migration tag `v1` (applied) |
@@ -88,6 +89,13 @@ Two things differ from the first cut on every later one:
 - **Leave `migrations` out** unless a Durable Object class is added, renamed or removed. Tag `v1` is applied.
 
 ## Readback that proves the Home
+
+**A check never walks in.** Anything that looks at the live Home to verify it uses `https://irrwisch.com/?watch=1`
+(or `wss://irrwisch.com/api/ws?watch=1`), `GET /api/world` and the static routes. A watcher sees the place live and
+leaves nothing: no counted visit, no walker, no light, no worn ground, no allowance. Arrival, allowance and
+contribution behaviour is proven against a local Worker (`npm run dev:worker`), never by visiting production.
+On the first day the building session ignored this and walked in nine times; the third cut took those nine off the
+count. The ground those walks wore and the windows they lit could not be told apart from real ones and stayed.
 
 Checked on 2026-11-20 after the first cut, from the building session:
 

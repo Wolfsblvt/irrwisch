@@ -26,6 +26,8 @@ export function connect(handlers: ConnectionHandlers): Connection {
   let pingTimer: ReturnType<typeof setInterval> | null = null;
 
   const url = new URL('/api/ws', window.location.href);
+  // `/?watch=1` looks at the place without walking in: nothing is counted and nothing can be left.
+  if (new URLSearchParams(window.location.search).get('watch') === '1') url.searchParams.set('watch', '1');
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
 
   function open(): void {

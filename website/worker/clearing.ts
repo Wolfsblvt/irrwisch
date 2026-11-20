@@ -84,7 +84,7 @@ export class Clearing extends DurableObject {
       if (request.headers.get('upgrade') !== 'websocket') {
         return new Response('Expected a WebSocket upgrade.', { status: 426 });
       }
-      return this.openSession(request);
+      return this.openSession(request, url.searchParams.get('watch') === '1');
     }
     if (url.pathname.startsWith('/api/admin/')) return this.admin(request, url);
     return new Response('Not found.', { status: 404 });
@@ -129,8 +129,11 @@ export class Clearing extends DurableObject {
     return new Response('Not found.', { status: 404 });
   }
 
-  private async openSession(request: Request): Promise<Response> {
-    const guest = await this.guestKey(request);
+  private async openSession(request: Request, watching: boolean): Promise<Response> {
+    // A watcher sees the place live and leaves nothing: no visit, no walker,
+    // no light, no allowance, no guest row. Checks against the live Home use
+    // this, so that looking after the place never counts as walking in.
+    const guest = watching ? '' : await this.guestKey(request);
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     const now = Date.now();
@@ -140,7 +143,7 @@ export class Clearing extends DurableObject {
     // One allowance and one counted visit per address per night. A reload,
     // a second tab or a reconnect picks up where the first arrival left off.
     this.sql.exec('DELETE FROM guests WHERE since <= ?', now - NIGHT_MS);
-    const known = this.guestBudgets(guest);
+    const known = watching ? { budgets: { build: 0, place: 0, chalk: 0, nudge: 0 }, hand: [] } : this.guestBudgets(guest);
     const session: Session = {
       id,
       guest,
@@ -276,6 +279,23 @@ export class Clearing extends DurableObject {
     await this.ctx.storage.setAlarm(now + (active ? TICK_ACTIVE_MS : TICK_IDLE_MS));
   }
 
+  // ----- Corrections -------------------------------------------------------
+
+  /**
+   * One-time repairs to stored facts, each applied once and remembered in
+   * `meta`. They exist because nothing else can reach this object's storage.
+   */
+  private applyCorrections(): void {
+    // 2026-11-20: on the first day the building session checked the live Home
+    // nine times as an ordinary visitor (two, three and four page loads in
+    // three check runs). Those were not people walking in.
+    if (this.meta('fix_20261120_check_visits') === null) {
+      const visits = Number(this.meta('visits') ?? 0);
+      if (visits >= 16) this.setMeta('visits', String(visits - 9));
+      this.setMeta('fix_20261120_check_visits', '1');
+    }
+  }
+
   // ----- Guests ------------------------------------------------------------
 
   /**
@@ -307,6 +327,8 @@ export class Clearing extends DurableObject {
   // ----- Actions -----------------------------------------------------------
 
   private handle(message: ClientMessage, session: Session, now: number): HandleResult {
+    // Watchers have no guest key and leave nothing, not even a wave.
+    if (!session.guest) return { ok: false, reason: 'spent' };
     switch (message.t) {
       case 'build':
         return this.build(message, session, now);
@@ -555,6 +577,7 @@ export class Clearing extends DurableObject {
       );
     `);
     if (this.meta('version') === null) this.seed(Date.now());
+    this.applyCorrections();
   }
 
   private seed(now: number): void {
