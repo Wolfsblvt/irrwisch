@@ -26,6 +26,7 @@ building session, through Wolf's authenticated Cloudflare connection and on his 
 | Rate limit | binding `RATE_IP`, namespace `1201` (the Works contact form uses 1101 to 1103), 12 arrivals per address per minute per location |
 | Secret | `ADMIN_TOKEN`: **not set**. The three operator routes answer 404 until Wolf sets it (at least 24 characters) |
 | Static assets | `website/artifacts/site/`, `404-page` handling, Worker first only for `/api/*`, `X-Robots-Tag` rules for the legal routes |
+| Works pile | listed on wolfsblvt.works since 2026-11-20 (`Wolfsblvt/wolfsblvt.works` pull request 26, merged as `0fe0dfc`, published by that repository's own workflow) |
 | Surface role | one canonical human-facing Home with a small live API under `/api/`; no Docs, no app, no status host |
 
 ### Zone settings that carry product promises
